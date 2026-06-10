@@ -90,6 +90,17 @@ export default function Login() {
           </button>
         </div>
 
+        {/* Motto */}
+        <div style={{ width: '100%', maxWidth: '320px', textAlign: 'center', padding: '0 8px' }}>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.7, margin: 0, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
+            Soukromá tipovačka pro kamarády a fanoušky <strong style={{ color: '#00b4c8' }}>AFK Kácov</strong>.
+          </p>
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '6px 0 0', fontStyle: 'italic', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
+            Peníze se přerozdělí od těch, kteří fotbalu rozumí méně,
+            k těm, kterým Pánbůh nadělil lepší fotbalový odhad.
+          </p>
+        </div>
+
         {/* Přihlašovací formulář */}
         <div style={{ width: '100%', maxWidth: '320px', background: 'rgba(4,9,28,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '24px', backdropFilter: 'blur(20px)' }}>
           <h2 style={{ fontSize: '17px', fontWeight: 700, marginBottom: '16px', color: '#fff' }}>Přihlásit se</h2>
