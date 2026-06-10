@@ -131,8 +131,11 @@ export default function Home() {
             {/* Jackpot po finále */}
             <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', marginBottom: '10px' }}>
               <p style={{ fontWeight: 700, color: '#e8a020', fontSize: '13px', margin: '0 0 6px' }}>🏆 Jackpot po finále</p>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', margin: '0 0 6px', lineHeight: 1.5 }}>
+                Pokud nikdo netrefí přesný výsledek finálového zápasu, celý jackpot se rozdělí mezi nejlepší hráče žebříčku:
+              </p>
               <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', margin: 0 }}>
-                <strong style={{ color: '#fff' }}>1. místo 50%</strong> · <strong style={{ color: '#fff' }}>2. místo 33%</strong> · <strong style={{ color: '#fff' }}>3. místo 17%</strong>
+                <strong style={{ color: '#e8a020' }}>1. místo 50%</strong> · <strong style={{ color: '#e8a020' }}>2. místo 33%</strong> · <strong style={{ color: '#e8a020' }}>3. místo 17%</strong> z celkové nerozdělené částky.
               </p>
             </div>
 
