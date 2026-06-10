@@ -19,7 +19,7 @@ export default function Register() {
 
     setLoading(true)
     try {
-      const email = `${form.prezdivka.trim().toLowerCase()}@tipovacka.local`
+      const email = `${form.prezdivka.trim().toLowerCase()}@ms2026.app`
       const { error: err } = await supabase.auth.signUp({
         email, password: form.heslo,
         options: { data: { jmeno: form.jmeno.trim(), prijmeni: form.prijmeni.trim(), prezdivka: form.prezdivka.trim(), telefon: form.telefon.trim() } }
