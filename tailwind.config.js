@@ -1,10 +1,10 @@
-﻿/** @type {import('tailwindcss').Config} */
+/** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
-        // MS 2026 tĂ©ma
+        // MS 2026 téma
         wc: {
           navy:  '#04091c',
           dark:  '#080f28',
