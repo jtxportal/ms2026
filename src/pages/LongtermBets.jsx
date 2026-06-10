@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
-const UZAVERKA_UTC = '2026-06-11T19:00:00Z'
+const UZAVERKA_UTC = '2026-06-17T06:00:00Z' // Po odehraném 1. kole skupin
 
 const TEAMS_48 = [
   'Alžírsko','Argentina','Austrálie','Belgie','Bosna a Hercegovina',
@@ -178,7 +178,7 @@ export default function LongtermBets() {
       {/* Uzávěrka */}
       <div style={{ borderRadius: '12px', padding: '12px 16px', fontSize: '13px', background: isOpen ? 'rgba(0,180,200,0.1)' : 'rgba(196,18,48,0.1)', border: isOpen ? '1px solid rgba(0,180,200,0.3)' : '1px solid rgba(196,18,48,0.3)', color: isOpen ? '#00b4c8' : '#ff8080' }}>
         {isOpen
-          ? '✅ Tipy jsou otevřeny · uzávěrka: 11. 6. 2026 21:00 CEST'
+          ? '✅ Tipy jsou otevřeny · uzávěrka: po 1. kole skupin (cca 17. 6. 2026)'
           : '🔒 Uzávěrka proběhla · tipy jsou uzamčeny'}
       </div>
 
