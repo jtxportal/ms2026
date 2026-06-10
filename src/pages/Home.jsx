@@ -178,6 +178,33 @@ export default function Home() {
         </div>
       )}
 
+      {/* Dlouhodobé tipy — rychlý přístup */}
+      <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(232,160,32,0.2)', borderRadius: '16px', padding: '14px 16px' }}>
+        <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 10px' }}>🎯 Dlouhodobé tipy · uzávěrka 11. 6. 21:00</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button onClick={() => navigate('/dlouhodoby')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(232,160,32,0.08)', border: '1px solid rgba(232,160,32,0.25)', borderRadius: '10px', cursor: 'pointer', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '20px' }}>🏆</span>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Vítěz MS 2026</div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)' }}>Vsadit na celkového vítěze turnaje</div>
+              </div>
+            </div>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#e8a020', whiteSpace: 'nowrap' }}>20 Kč →</span>
+          </button>
+          <button onClick={() => navigate('/dlouhodoby')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(0,180,200,0.08)', border: '1px solid rgba(0,180,200,0.2)', borderRadius: '10px', cursor: 'pointer', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '20px' }}>⚽</span>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>Nejlepší střelec</div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)' }}>Vsadit na krále střelců turnaje</div>
+              </div>
+            </div>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#00b4c8', whiteSpace: 'nowrap' }}>20 Kč →</span>
+          </button>
+        </div>
+      </div>
+
       {/* Nejbližší zápasy */}
       {upcoming.length > 0 && (
         <div>
