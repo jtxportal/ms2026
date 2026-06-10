@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { AFK_LOGO, TROPHY } from '../lib/images'
 
 const NAV = [
   { to: '/dlouhodoby', label: 'Tipy',     icon: '🎯' },
