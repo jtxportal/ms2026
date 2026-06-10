@@ -158,7 +158,7 @@ export default function Profile() {
           <div style={{ padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
             <p style={{ fontWeight: 600, fontSize: '13px', color: '#fff', margin: '0 0 8px' }}>Upozornit před výkopem</p>
             <div style={{ display: 'flex', gap: '8px' }}>
-              {[2, 4, 12, 24].map(h => (
+              {[2, 4, 12, 24, 48].map(h => (
                 <button key={h} onClick={() => setHoursBefore(h)}
                   style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '13px', background: hoursBefore === h ? '#e8a020' : 'rgba(255,255,255,0.1)', color: hoursBefore === h ? '#000' : '#fff' }}>
                   {h}h
