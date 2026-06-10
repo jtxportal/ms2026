@@ -1,13 +1,13 @@
-﻿import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 const NAV = [
-  { to: '/',           label: 'DomĹŻ',     icon: 'đźŹ ', end: true },
-  { to: '/zapasy',     label: 'ZĂˇpasy',   icon: 'âš˝' },
-  { to: '/zebricek',   label: 'Ĺ˝ebĹ™Ă­ÄŤek', icon: 'đźŹ†' },
-  { to: '/chat',       label: 'Chat',     icon: 'đź’¬' },
-  { to: '/dlouhodoby', label: 'Tipy',     icon: 'đźŽŻ' },
-  { to: '/profil',     label: 'Profil',   icon: 'đź‘¤' },
+  { to: '/',           label: 'Domů',     icon: '🏠', end: true },
+  { to: '/zapasy',     label: 'Zápasy',   icon: '⚽' },
+  { to: '/zebricek',   label: 'Žebříček', icon: '🏆' },
+  { to: '/chat',       label: 'Chat',     icon: '💬' },
+  { to: '/dlouhodoby', label: 'Tipy',     icon: '🎯' },
+  { to: '/profil',     label: 'Profil',   icon: '👤' },
 ]
 
 export default function Layout({ children }) {
@@ -22,7 +22,7 @@ export default function Layout({ children }) {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#04091c' }}>
 
-      {/* Rainbow stripe nahoĹ™e */}
+      {/* Rainbow stripe nahoře */}
       <div className="rainbow-stripe" />
 
       {/* Header */}
@@ -37,7 +37,7 @@ export default function Layout({ children }) {
           {/* Logo + user */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '20px' }}>âš˝</span>
+              <span style={{ fontSize: '20px' }}>⚽</span>
               <span style={{
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 800, fontSize: '16px',
@@ -45,7 +45,7 @@ export default function Layout({ children }) {
                 background: 'linear-gradient(90deg, #fff, #e8a020)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
               }}>
-                TipovaÄŤka MS 2026
+                Tipovačka MS 2026
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -61,13 +61,13 @@ export default function Layout({ children }) {
                 </NavLink>
               )}
               <span style={{ fontSize: '13px', color: '#00b4c8', fontWeight: 600 }}>
-                {profile?.prezdivka ?? 'â€¦'}
+                {profile?.prezdivka ?? '…'}
               </span>
               <button onClick={handleSignOut} style={{
                 fontSize: '11px', color: 'rgba(255,255,255,0.35)',
                 background: 'none', border: 'none', cursor: 'pointer',
               }}>
-                OdhlĂˇsit
+                Odhlásit
               </button>
             </div>
           </div>
