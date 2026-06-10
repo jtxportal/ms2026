@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -47,23 +47,23 @@ export default function Profile() {
 
   return (
     <div className="space-y-5">
-      <h1 className="font-bold text-xl text-gray-900">đź‘¤ Profil</h1>
+      <h1 className="font-bold text-xl text-gray-900">👤 Profil</h1>
 
-      {/* ZĂˇkladnĂ­ info */}
+      {/* Základní info */}
       <div className="card">
         <h2 className="font-bold text-gray-900 mb-3">Moje informace</h2>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between py-2 border-b border-gray-100">
-            <span className="text-gray-500">PĹ™ezdĂ­vka</span>
+            <span className="text-gray-500">Přezdívka</span>
             <span className="font-semibold text-gray-900">{profile?.prezdivka}</span>
           </div>
           <div className="flex justify-between py-2 border-b border-gray-100">
-            <span className="text-gray-500">JmĂ©no</span>
+            <span className="text-gray-500">Jméno</span>
             <span className="font-semibold text-gray-900">{profile?.jmeno} {profile?.prijmeni}</span>
           </div>
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-500">Telefon</span>
-            <span className="font-semibold text-gray-900">{profile?.telefon || 'â€”'}</span>
+            <span className="font-semibold text-gray-900">{profile?.telefon || '—'}</span>
           </div>
           <div className="flex justify-between py-2">
             <span className="text-gray-500">Email</span>
@@ -72,14 +72,14 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Statistiky mĂ˝ch tipĹŻ */}
+      {/* Statistiky mých tipů */}
       {!loading && (
         <div className="card">
           <h2 className="font-bold text-gray-900 mb-3">Moje tipy</h2>
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gray-50 rounded-xl p-3 text-center">
               <div className="text-2xl font-bold text-gray-800">{betsPlaced}</div>
-              <div className="text-xs text-gray-500 mt-0.5">TipĹŻ celkem</div>
+              <div className="text-xs text-gray-500 mt-0.5">Tipů celkem</div>
             </div>
             <div className="bg-green-50 rounded-xl p-3 text-center">
               <div className="text-2xl font-bold text-pitch-600">{betsSettled}</div>
@@ -87,11 +87,11 @@ export default function Profile() {
             </div>
             <div className="bg-blue-50 rounded-xl p-3 text-center">
               <div className="text-2xl font-bold text-blue-600">{betsPending}</div>
-              <div className="text-xs text-gray-500 mt-0.5">ÄŚekĂˇ na vĂ˝sledek</div>
+              <div className="text-xs text-gray-500 mt-0.5">Čeká na výsledek</div>
             </div>
             <div className="bg-amber-50 rounded-xl p-3 text-center">
               <div className="text-2xl font-bold text-amber-600">{betsChanged}</div>
-              <div className="text-xs text-gray-500 mt-0.5">TipĹŻ zmÄ›nÄ›no</div>
+              <div className="text-xs text-gray-500 mt-0.5">Tipů změněno</div>
             </div>
           </div>
         </div>
@@ -99,14 +99,14 @@ export default function Profile() {
 
       {/* Notifikace */}
       <div className="card">
-        <h2 className="font-bold text-gray-900 mb-1">đź”” UpozornÄ›nĂ­</h2>
-        <p className="text-xs text-gray-500 mb-4">PĹ™ipomenu ti zĂˇpasy, na kterĂ© jeĹˇtÄ› nemĂˇĹˇ tip.</p>
+        <h2 className="font-bold text-gray-900 mb-1">🔔 Upozornění</h2>
+        <p className="text-xs text-gray-500 mb-4">Připomenu ti zápasy, na které ještě nemáš tip.</p>
 
         {/* Email notifikace */}
         <div className="flex items-center justify-between py-3 border-b border-gray-100">
           <div>
-            <p className="font-medium text-sm text-gray-800">E-mail upozornÄ›nĂ­</p>
-            <p className="text-xs text-gray-500">DostĂˇvat email pĹ™ed nezatipovanĂ˝mi zĂˇpasy</p>
+            <p className="font-medium text-sm text-gray-800">E-mail upozornění</p>
+            <p className="text-xs text-gray-500">Dostávat email před nezatipovanými zápasy</p>
           </div>
           <button
             onClick={() => setNotifyEmail(v => !v)}
@@ -116,10 +116,10 @@ export default function Profile() {
           </button>
         </div>
 
-        {/* Kolik hodin pĹ™edem */}
+        {/* Kolik hodin předem */}
         {notifyEmail && (
           <div className="py-3 border-b border-gray-100">
-            <p className="font-medium text-sm text-gray-800 mb-2">Upozornit pĹ™ed zĂˇpasem</p>
+            <p className="font-medium text-sm text-gray-800 mb-2">Upozornit před zápasem</p>
             <div className="flex gap-2">
               {[1, 2, 4, 12, 24].map(h => (
                 <button key={h}
@@ -135,19 +135,19 @@ export default function Profile() {
           </div>
         )}
 
-        {/* WhatsApp â€” pĹ™ipravujeme */}
+        {/* WhatsApp — připravujeme */}
         <div className="flex items-center justify-between py-3 opacity-50">
           <div>
-            <p className="font-medium text-sm text-gray-800">WhatsApp upozornÄ›nĂ­</p>
-            <p className="text-xs text-gray-500">PĹ™ipravujeme â€” brzy k dispozici</p>
+            <p className="font-medium text-sm text-gray-800">WhatsApp upozornění</p>
+            <p className="text-xs text-gray-500">Připravujeme — brzy k dispozici</p>
           </div>
           <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">Brzy</span>
         </div>
 
-        {saved && <div className="mb-3 bg-pitch-50 text-pitch-700 text-sm rounded-xl px-3 py-2">âś… NastavenĂ­ uloĹľeno</div>}
+        {saved && <div className="mb-3 bg-pitch-50 text-pitch-700 text-sm rounded-xl px-3 py-2">✅ Nastavení uloženo</div>}
 
         <button onClick={saveSettings} disabled={saving} className="btn-primary w-full mt-2">
-          {saving ? 'UklĂˇdĂˇmâ€¦' : 'UloĹľit nastavenĂ­'}
+          {saving ? 'Ukládám…' : 'Uložit nastavení'}
         </button>
       </div>
     </div>
