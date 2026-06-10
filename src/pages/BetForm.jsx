@@ -4,6 +4,13 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { formatDateTime, isBeforeKickoff, FAZE_LABEL, FAZE_CENA } from '../lib/utils'
 
+const S = {
+  card: { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', padding: '16px' },
+  input: { width: '80px', height: '80px', fontSize: '36px', fontWeight: 900, textAlign: 'center', background: 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.25)', borderRadius: '16px', color: '#fff', outline: 'none', display: 'block' },
+  btn: { width: '100%', padding: '12px', borderRadius: '12px', background: 'linear-gradient(135deg, #e8a020, #c87010)', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: '15px' },
+  btnDisabled: { opacity: 0.5, cursor: 'not-allowed' },
+}
+
 export default function BetForm() {
   const { id }   = useParams()
   const navigate = useNavigate()
@@ -18,17 +25,12 @@ export default function BetForm() {
   const [error,   setError]   = useState('')
   const [done,    setDone]    = useState(false)
 
-  useEffect(() => {
-    if (!user) return
-    fetchData()
-  }, [id, user])
+  useEffect(() => { if (user) fetchData() }, [id, user])
 
   async function fetchData() {
     setLoading(true)
     const [{ data: m }, { data: b }] = await Promise.all([
-      supabase.from('matches')
-        .select('*, domaci:tym_domaci(id,nazev,vlajka_url), hosti:tym_hosti(id,nazev,vlajka_url)')
-        .eq('id', id).single(),
+      supabase.from('matches').select('*, domaci:tym_domaci(id,nazev,vlajka_url), hosti:tym_hosti(id,nazev,vlajka_url)').eq('id', id).single(),
       supabase.from('bets').select('*').eq('match_id', id).eq('user_id', user.id).maybeSingle(),
     ])
     setMatch(m)
@@ -37,8 +39,8 @@ export default function BetForm() {
     setLoading(false)
   }
 
-  if (loading) return <div className="flex justify-center py-20"><div className="text-4xl animate-bounce">⚽</div></div>
-  if (!match)  return <div className="text-center py-20 text-gray-400">Zápas nenalezen</div>
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '60px', fontSize: '40px' }}>⚽</div>
+  if (!match)  return <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(255,255,255,0.4)' }}>Zápas nenalezen</div>
 
   const locked         = !isBeforeKickoff(match.vykop)
   const alreadyChanged = myBet && myBet.update_count >= 1
@@ -52,144 +54,133 @@ export default function BetForm() {
     e.preventDefault()
     if (locked || alreadyChanged) return
     setError('')
-
     const d = parseInt(tipD, 10)
     const h = parseInt(tipH, 10)
-    if (isNaN(d)||isNaN(h)||d<0||h<0||d>30||h>30) {
-      setError('Zadej platné skóre (0–30).'); return
-    }
-
+    if (isNaN(d)||isNaN(h)||d<0||h<0||d>30||h>30) { setError('Zadej platné skóre (0–30).'); return }
     setSaving(true)
     try {
       if (myBet) {
-        const { error: err } = await supabase.from('bets')
-          .update({ tip_domaci: d, tip_hosti: h })
-          .eq('id', myBet.id)
+        const { error: err } = await supabase.from('bets').update({ tip_domaci: d, tip_hosti: h }).eq('id', myBet.id)
         if (err) throw err
       } else {
-        const { error: err } = await supabase.from('bets')
-          .insert({ match_id: Number(id), user_id: user.id, tip_domaci: d, tip_hosti: h })
+        const { error: err } = await supabase.from('bets').insert({ match_id: Number(id), user_id: user.id, tip_domaci: d, tip_hosti: h })
         if (err) throw err
       }
       setDone(true)
       setTimeout(() => navigate(-1), 1200)
     } catch (err) {
-      setError(err.message?.includes('vykop') ? 'Zápas již začal — tip nelze zadat.' : (err.message ?? 'Chyba při ukládání.'))
+      setError(err.message?.includes('vykop') ? 'Zápas již začal.' : (err.message ?? 'Chyba při ukládání.'))
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <div className="max-w-sm mx-auto">
-      <button onClick={() => navigate(-1)} className="text-sm text-gray-500 hover:text-gray-700 mb-5 flex items-center gap-1">← Zpět</button>
+    <div style={{ maxWidth: '360px', margin: '0 auto' }}>
+      <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '14px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+        ← Zpět
+      </button>
 
       {/* Info o zápasu */}
-      <div className="card mb-5">
-        <div className="text-center mb-2">
-          <span className="text-xs font-semibold text-gray-500">
-            {match.faze === 'skupina' ? `Skupina ${match.skupina}` : FAZE_LABEL[match.faze]}
-            {' · '}{formatDateTime(match.vykop)} CEST
-          </span>
+      <div style={{ ...S.card, marginBottom: '16px', textAlign: 'center' }}>
+        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '12px' }}>
+          {match.faze === 'skupina' ? `Skupina ${match.skupina}` : (FAZE_LABEL[match.faze] ?? match.faze)}
+          {' · '}{formatDateTime(match.vykop)} CEST
         </div>
-        <div className="flex items-center justify-center gap-6 py-2">
-          <div className="text-center">
-            {flagD && <img src={flagD} alt={nazevD} className="w-12 h-8 object-cover rounded mx-auto mb-1 shadow-sm" />}
-            <span className="text-sm font-bold">{nazevD}</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px', padding: '8px 0' }}>
+          <div style={{ textAlign: 'center' }}>
+            {flagD && <img src={flagD} alt={nazevD} style={{ width: '48px', height: '32px', objectFit: 'cover', borderRadius: '4px', marginBottom: '6px', boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }} />}
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{nazevD}</div>
           </div>
-          <span className="text-gray-300 text-lg font-light">vs</span>
-          <div className="text-center">
-            {flagH && <img src={flagH} alt={nazevH} className="w-12 h-8 object-cover rounded mx-auto mb-1 shadow-sm" />}
-            <span className="text-sm font-bold">{nazevH}</span>
+          <div style={{ fontSize: '18px', color: 'rgba(255,255,255,0.3)', fontWeight: 300 }}>vs</div>
+          <div style={{ textAlign: 'center' }}>
+            {flagH && <img src={flagH} alt={nazevH} style={{ width: '48px', height: '32px', objectFit: 'cover', borderRadius: '4px', marginBottom: '6px', boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }} />}
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{nazevH}</div>
           </div>
         </div>
-        <div className="text-center mt-2">
-          <span className="badge bg-pitch-100 text-pitch-700">Cena tipu: {cena} Kč</span>
+        <div style={{ marginTop: '10px', background: 'rgba(232,160,32,0.15)', border: '1px solid rgba(232,160,32,0.3)', borderRadius: '8px', padding: '4px 12px', display: 'inline-block', fontSize: '12px', fontWeight: 700, color: '#e8a020' }}>
+          Sázka: {cena} Kč
         </div>
       </div>
 
-      {/* Uzamčeno — zápas začal */}
+      {/* Uzamčeno */}
       {locked ? (
-        <div className="card text-center text-gray-500 py-8">
-          <div className="text-4xl mb-3">🔒</div>
-          <p className="font-semibold">Zápas již začal</p>
-          <p className="text-sm mt-1">Tipy jsou uzamčeny</p>
-          {myBet && <p className="mt-3 text-sm font-medium text-gray-700">Tvůj tip: {myBet.tip_domaci} : {myBet.tip_hosti}</p>}
+        <div style={{ ...S.card, textAlign: 'center', padding: '32px 16px' }}>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔒</div>
+          <p style={{ fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>Zápas již začal</p>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', margin: 0 }}>Tipy jsou uzamčeny</p>
+          {myBet && <p style={{ marginTop: '12px', fontSize: '14px', fontWeight: 700, color: '#e8a020' }}>Tvůj tip: {myBet.tip_domaci} : {myBet.tip_hosti}</p>}
         </div>
 
-      /* Tip již byl změněn */
       ) : alreadyChanged ? (
-        <div className="card text-center py-8">
-          <div className="text-4xl mb-3">🔒</div>
-          <p className="font-semibold text-gray-700">Tip již byl změněn</p>
-          <p className="text-sm text-gray-500 mt-2">Každý tip lze změnit pouze jednou.</p>
-          <div className="mt-4 bg-blue-50 rounded-xl px-4 py-3 text-blue-700 font-medium text-sm">
+        <div style={{ ...S.card, textAlign: 'center', padding: '32px 16px' }}>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🔒</div>
+          <p style={{ fontWeight: 700, color: '#fff', margin: '0 0 6px' }}>Tip již byl změněn</p>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', margin: '0 0 16px' }}>Každý tip lze změnit pouze jednou.</p>
+          <div style={{ background: 'rgba(0,180,200,0.1)', border: '1px solid rgba(0,180,200,0.3)', borderRadius: '10px', padding: '10px 16px', fontSize: '14px', fontWeight: 700, color: '#00b4c8' }}>
             Aktuální tip: {myBet.tip_domaci} : {myBet.tip_hosti}
           </div>
         </div>
 
-      /* Hotovo */
       ) : done ? (
-        <div className="card text-center py-10">
-          <div className="text-5xl mb-3">✅</div>
-          <p className="font-bold text-pitch-700 text-lg">Tip uložen!</p>
+        <div style={{ ...S.card, textAlign: 'center', padding: '40px 16px' }}>
+          <div style={{ fontSize: '50px', marginBottom: '12px' }}>✅</div>
+          <p style={{ fontWeight: 800, fontSize: '18px', color: '#4ade80', margin: 0 }}>Tip uložen!</p>
         </div>
 
-      /* Formulář */
       ) : (
-        <form onSubmit={handleSubmit} className="card">
-          <h2 className="font-bold text-gray-900 mb-2 text-center">
+        <form onSubmit={handleSubmit} style={S.card}>
+          <h2 style={{ fontWeight: 700, fontSize: '16px', color: '#fff', textAlign: 'center', margin: '0 0 16px' }}>
             {myBet ? 'Upravit tip' : 'Zadat tip'}
           </h2>
 
-          {/* Upozornění na jednu změnu */}
           {myBet && myBet.update_count === 0 && (
-            <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-700 text-center">
-              ⚠️ Tip můžeš změnit ještě <strong>jednou</strong> před výkopem. Využij to moudře!
+            <div style={{ marginBottom: '14px', background: 'rgba(232,160,32,0.1)', border: '1px solid rgba(232,160,32,0.3)', borderRadius: '10px', padding: '8px 12px', fontSize: '12px', color: '#e8a020', textAlign: 'center' }}>
+              ⚠️ Tip můžeš změnit ještě <strong>jednou</strong> před výkopem
             </div>
           )}
 
-          {error && <div className="mb-4 bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>}
+          {error && <div style={{ marginBottom: '14px', background: 'rgba(196,18,48,0.2)', border: '1px solid rgba(196,18,48,0.4)', borderRadius: '10px', padding: '10px 12px', fontSize: '13px', color: '#ff8080' }}>{error}</div>}
 
           {/* Velká pole pro skóre */}
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-xs font-semibold text-gray-500 text-center max-w-[80px] truncate">{nazevD}</span>
-              <input type="number" min="0" max="30"
-                className="w-20 h-20 text-4xl font-black text-center border-2 border-gray-200 rounded-2xl focus:border-pitch-500 focus:outline-none bg-white"
-                value={tipD} onChange={e => setTipD(e.target.value)} required />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', maxWidth: '80px', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nazevD}</span>
+              <input type="number" min="0" max="30" style={S.input} value={tipD} onChange={e => setTipD(e.target.value)} required />
             </div>
-            <span className="text-3xl text-gray-200 font-light mt-6">:</span>
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-xs font-semibold text-gray-500 text-center max-w-[80px] truncate">{nazevH}</span>
-              <input type="number" min="0" max="30"
-                className="w-20 h-20 text-4xl font-black text-center border-2 border-gray-200 rounded-2xl focus:border-pitch-500 focus:outline-none bg-white"
-                value={tipH} onChange={e => setTipH(e.target.value)} required />
+            <span style={{ fontSize: '28px', color: 'rgba(255,255,255,0.2)', fontWeight: 300, marginTop: '24px' }}>:</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', maxWidth: '80px', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nazevH}</span>
+              <input type="number" min="0" max="30" style={S.input} value={tipH} onChange={e => setTipH(e.target.value)} required />
             </div>
           </div>
 
           {/* Rychlé předvolby */}
-          <div className="mb-6">
-            <p className="text-xs text-center text-gray-400 mb-2">Oblíbené výsledky</p>
-            <div className="flex flex-wrap justify-center gap-2">
+          <div style={{ marginBottom: '20px' }}>
+            <p style={{ fontSize: '11px', textAlign: 'center', color: 'rgba(255,255,255,0.35)', marginBottom: '8px' }}>Oblíbené výsledky</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '6px' }}>
               {[['1','0'],['2','1'],['2','0'],['1','1'],['0','1'],['0','2'],['3','1'],['3','0']].map(([d,h]) => (
                 <button key={`${d}-${h}`} type="button"
                   onClick={() => { setTipD(d); setTipH(h) }}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors border ${
-                    tipD===d&&tipH===h ? 'bg-pitch-600 text-white border-pitch-600' : 'bg-white text-gray-600 border-gray-200 hover:border-pitch-400'
-                  }`}
+                  style={{
+                    padding: '7px 12px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', border: '1px solid',
+                    background: tipD===d&&tipH===h ? '#e8a020' : 'rgba(255,255,255,0.08)',
+                    color: tipD===d&&tipH===h ? '#000' : '#fff',
+                    borderColor: tipD===d&&tipH===h ? '#e8a020' : 'rgba(255,255,255,0.15)',
+                  }}
                 >{d}:{h}</button>
               ))}
             </div>
           </div>
 
-          <button type="submit" disabled={saving}
-            className="btn-primary w-full text-base py-3">
+          <button type="submit" disabled={saving} style={{ ...S.btn, ...(saving ? S.btnDisabled : {}) }}>
             {saving ? 'Ukládám…' : myBet ? 'Změnit tip (poslední možnost!)' : `Vsadit ${cena} Kč`}
           </button>
 
           {myBet && (
-            <p className="text-xs text-center text-gray-400 mt-2">Aktuální tip: {myBet.tip_domaci} : {myBet.tip_hosti}</p>
+            <p style={{ marginTop: '8px', textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>
+              Aktuální tip: {myBet.tip_domaci} : {myBet.tip_hosti}
+            </p>
           )}
         </form>
       )}
