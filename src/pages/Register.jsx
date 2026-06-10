@@ -1,6 +1,7 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { MASCOTS } from '../lib/images'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -13,121 +14,77 @@ export default function Register() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-
-    if (form.heslo !== form.heslo2) {
-      setError('Hesla se neshodují.')
-      return
-    }
-    if (form.heslo.length < 6) {
-      setError('Heslo musí mít alespoň 6 znaků.')
-      return
-    }
-    if (form.prezdivka.trim().length < 2) {
-      setError('Přezdívka je příliš krátká.')
-      return
-    }
+    if (form.heslo !== form.heslo2) { setError('Hesla se neshodujĂ­.'); return }
+    if (form.heslo.length < 6)      { setError('Heslo musĂ­ mĂ­t alespoĹ 6 znakĹŻ.'); return }
 
     setLoading(true)
     try {
       const email = `${form.prezdivka.trim().toLowerCase()}@tipovacka.local`
       const { error: err } = await supabase.auth.signUp({
-        email,
-        password: form.heslo,
-        options: {
-          data: {
-            jmeno:     form.jmeno.trim(),
-            prijmeni:  form.prijmeni.trim(),
-            prezdivka: form.prezdivka.trim(),
-            telefon:   form.telefon.trim(),
-          }
-        }
+        email, password: form.heslo,
+        options: { data: { jmeno: form.jmeno.trim(), prijmeni: form.prijmeni.trim(), prezdivka: form.prezdivka.trim(), telefon: form.telefon.trim() } }
       })
-      if (err) {
-        if (err.message?.includes('already registered')) {
-          throw new Error('Tato přezdívka je již obsazena.')
-        }
-        throw err
-      }
+      if (err) { if (err.message?.includes('already')) throw new Error('Tato pĹ™ezdĂ­vka je obsazena.'); throw err }
       navigate('/')
     } catch (err) {
-      setError(err.message ?? 'Chyba při registraci.')
+      setError(err.message ?? 'Chyba pĹ™i registraci.')
     } finally {
       setLoading(false)
     }
   }
 
+  const inp = (label, field, props = {}) => (
+    <div style={{ marginBottom: '12px' }}>
+      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.55)', marginBottom: '5px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>{label}</label>
+      <input className="input" value={form[field]} onChange={set(field)} style={{ fontSize: '14px' }} {...props} />
+    </div>
+  )
+
   return (
-    <div className="min-h-screen bg-pitch-800 flex flex-col items-center justify-center px-4 py-8">
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${MASCOTS})`, backgroundSize: 'cover', backgroundPosition: 'center 20%', filter: 'brightness(0.3) saturate(1.2)' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(4,9,28,0.4), rgba(4,9,28,0.98))' }} />
+      <div className="rainbow-stripe" style={{ position: 'relative', zIndex: 2 }} />
 
-      <div className="mb-6 text-center">
-        <div className="text-5xl mb-2">⚽</div>
-        <h1 className="text-xl font-bold text-white">Tipovačka MS 2026</h1>
-      </div>
-
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-5">Nový účet</h2>
-
-        {error && (
-          <div className="mb-4 bg-red-50 text-red-700 text-sm rounded-xl px-4 py-3">
-            {error}
+      <div style={{ position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 20px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <div style={{ fontSize: '40px', marginBottom: '6px' }}>âš˝</div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: '26px', background: 'linear-gradient(135deg, #fff, #e8a020)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            NovĂˇ registrace
           </div>
-        )}
+          <div style={{ fontSize: '11px', color: '#00b4c8', letterSpacing: '3px', textTransform: 'uppercase', marginTop: '4px' }}>MS 2026</div>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Jméno</label>
-              <input className="input text-sm" placeholder="Jan" value={form.jmeno} onChange={set('jmeno')} required />
+        <div style={{ width: '100%', maxWidth: '340px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '24px 20px', backdropFilter: 'blur(16px)' }}>
+          {error && <div style={{ marginBottom: '14px', background: 'rgba(196,18,48,0.15)', border: '1px solid rgba(196,18,48,0.4)', color: '#ff8080', fontSize: '12px', borderRadius: '10px', padding: '10px 14px' }}>{error}</div>}
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '0' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.55)', marginBottom: '5px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>JmĂ©no</label>
+                <input className="input" value={form.jmeno} onChange={set('jmeno')} placeholder="Jan" required style={{ fontSize: '14px' }} />
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.55)', marginBottom: '5px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>PĹ™Ă­jmenĂ­</label>
+                <input className="input" value={form.prijmeni} onChange={set('prijmeni')} placeholder="NovĂˇk" required style={{ fontSize: '14px' }} />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Příjmení</label>
-              <input className="input text-sm" placeholder="Novák" value={form.prijmeni} onChange={set('prijmeni')} required />
-            </div>
-          </div>
+            {inp('PĹ™ezdĂ­vka (pĹ™ihlaĹˇovacĂ­ jmĂ©no)', 'prezdivka', { placeholder: 'PepĂ­kMessi', autoCapitalize: 'none', required: true })}
+            {inp('Telefon (nepovinnĂ©)', 'telefon', { placeholder: '+420 777 ...', type: 'tel' })}
+            {inp('Heslo', 'heslo', { type: 'password', required: true })}
+            {inp('Heslo znovu', 'heslo2', { type: 'password', required: true })}
 
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Přezdívka <span className="text-gray-400">(slouží jako přihlašovací jméno)</span></label>
-            <input
-              className="input text-sm"
-              placeholder="PepíkMessi"
-              value={form.prezdivka}
-              onChange={set('prezdivka')}
-              autoCapitalize="none"
-              required
-            />
-          </div>
+            <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', fontSize: '15px', padding: '12px', marginTop: '4px' }}>
+              {loading ? 'Registrujiâ€¦' : 'Zaregistrovat se âšˇ'}
+            </button>
+          </form>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Telefon <span className="text-gray-400">(nepovinné)</span></label>
-            <input className="input text-sm" placeholder="+420 777 123 456" value={form.telefon} onChange={set('telefon')} type="tel" />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Heslo</label>
-            <input type="password" className="input text-sm" value={form.heslo} onChange={set('heslo')} required />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Heslo znovu</label>
-            <input type="password" className="input text-sm" value={form.heslo2} onChange={set('heslo2')} required />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full mt-2"
-          >
-            {loading ? 'Registruji…' : 'Zaregistrovat se'}
-          </button>
-        </form>
-
-        <p className="mt-4 text-center text-sm text-gray-500">
-          Máš účet?{' '}
-          <Link to="/prihlasit" className="text-pitch-600 font-semibold hover:underline">
-            Přihlásit se
-          </Link>
-        </p>
+          <p style={{ marginTop: '14px', textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>
+            MĂˇĹˇ ĂşÄŤet? <Link to="/prihlasit" style={{ color: '#00b4c8', fontWeight: 600, textDecoration: 'none' }}>PĹ™ihlĂˇsit se</Link>
+          </p>
+        </div>
       </div>
+      <div className="rainbow-stripe" style={{ position: 'relative', zIndex: 2 }} />
     </div>
   )
 }

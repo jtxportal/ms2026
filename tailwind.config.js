@@ -1,9 +1,18 @@
-/** @type {import('tailwindcss').Config} */
+﻿/** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
+        // MS 2026 tĂ©ma
+        wc: {
+          navy:  '#04091c',
+          dark:  '#080f28',
+          card:  'rgba(255,255,255,0.06)',
+          gold:  '#e8a020',
+          teal:  '#00b4c8',
+          red:   '#c41230',
+        },
         pitch: {
           50:  '#f0fdf4',
           100: '#dcfce7',
@@ -21,6 +30,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        condensed: ["'Barlow Condensed'", "'Arial Narrow'", 'Arial', 'sans-serif'],
       }
     }
   },
