@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import MatchCard from '../components/MatchCard'
@@ -151,12 +151,13 @@ export default function Calendar() {
         <div className="space-y-6">
           {Object.entries(grouped).map(([date, dayMatches]) => {
             const d = new Date(date + 'T12:00:00Z')
+            const isToday = new Date().toDateString() === d.toDateString()
             const days = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So']
             const months = ['led','úno','bře','dub','kvě','čvn','čvc','srp','zář','říj','lis','pro']
             const label = `${days[d.getUTCDay()]} ${d.getUTCDate()}. ${months[d.getUTCMonth()]}`
 
             return (
-              <div key={date}>
+              <div ref={isToday ? todayRef : null} key={date}>
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
                   {label}
                 </h3>
