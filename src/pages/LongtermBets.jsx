@@ -275,9 +275,14 @@ export default function LongtermBets() {
         )}
       </div>
 
-      <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.35)', margin: 0 }}>
-        Bank se dělí rovným dílem · Nikdo netrefí → bank přechází do jackpotu
-      </p>
+      <div style={{ background: 'rgba(0,180,200,0.08)', border: '1px solid rgba(0,180,200,0.15)', borderRadius: '12px', padding: '12px 16px', textAlign: 'center' }}>
+        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', margin: '0 0 4px' }}>
+          Bank se dělí rovným dílem · Nikdo netrefí → bank přechází do jackpotu
+        </p>
+        <p style={{ fontSize: '13px', color: '#00b4c8', fontWeight: 600, margin: 0 }}>
+          ⚽ Na jednotlivé zápasy tipujte v záložce <strong>Zápasy</strong>
+        </p>
+      </div>
     </div>
   )
 }
