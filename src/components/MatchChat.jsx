@@ -63,7 +63,7 @@ export default function MatchChat({ matchId, vykop }) {
     // Nejdřív načíst zprávy
     const { data: msgs, error: err } = await supabase
       .from('chat_messages')
-      .select('id, created_at, zprava, user_id')
+      .select('id, created_at, zprava, content, user_id')
       .eq('match_id', matchId)
       .order('created_at')
       .limit(100)
@@ -151,7 +151,7 @@ export default function MatchChat({ matchId, vykop }) {
                     border: `1px solid ${isMe ? 'rgba(232,160,32,0.25)' : 'rgba(255,255,255,0.1)'}`,
                     color: 'rgba(255,255,255,0.85)',
                   }}>
-                    {m.zprava}
+                    {m.zprava || m.content}
                   </div>
                 </div>
               )
