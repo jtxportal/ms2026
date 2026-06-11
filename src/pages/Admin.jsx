@@ -35,17 +35,23 @@ export default function AdminPage() {
   }
 
   async function handleBan(id, banned) {
-    await supabase.from('profiles').update({ je_banned: !banned }).eq('id', id)
-    setMsg(!banned ? 'Hráč zabanován' : 'Ban zrušen')
+    await supabase.from('profiles').update({ je_banned: !banned, banned_until: null }).eq('id', id)
+    setMsg(!banned ? 'Hráč zabanován (trvalý)' : 'Ban zrušen')
+    setTimeout(() => setMsg(''), 2000)
+    fetchAll()
+  }
+
+  async function handleBan24h(id) {
+    const until = new Date(Date.now() + 24*60*60*1000).toISOString()
+    await supabase.from('profiles').update({ je_banned: true, banned_until: until }).eq('id', id)
+    setMsg('Hráč zabanován na 24 hodin')
     setTimeout(() => setMsg(''), 2000)
     fetchAll()
   }
 
   async function handleDeposit(playerId) {
     const amt = parseInt(depositAmt, 10)
-    if (isNaN(amt) || amt <= 0) return
-    await supabase.from('profiles').update({ kredit: supabase.rpc('increment_kredit', { player_id: playerId, amount: amt }) }).eq('id', playerId)
-    // Jednodušší - přímý update
+    if (isNaN(amt) || amt === 0) return
     const player = players.find(p => p.id === playerId)
     const newKredit = (player?.kredit ?? 0) + amt
     await supabase.from('profiles').update({ kredit: newKredit }).eq('id', playerId)
@@ -102,17 +108,29 @@ export default function AdminPage() {
                 <div>
                   <span style={{ fontWeight: 700, fontSize: '14px', color: '#fff' }}>{p.prezdivka}</span>
                   {p.je_admin && <span style={{ marginLeft: '6px', fontSize: '10px', background: '#e8a020', color: '#000', borderRadius: '4px', padding: '1px 5px', fontWeight: 700 }}>ADMIN</span>}
-                  {p.je_banned && <span style={{ marginLeft: '6px', fontSize: '10px', background: 'rgba(196,18,48,0.5)', color: '#ff8080', borderRadius: '4px', padding: '1px 5px', fontWeight: 700 }}>BAN</span>}
+                  {p.je_banned && <span style={{ marginLeft: '6px', fontSize: '10px', background: 'rgba(196,18,48,0.5)', color: '#ff8080', borderRadius: '4px', padding: '1px 5px', fontWeight: 700 }}>{p.banned_until ? '24h BAN' : 'BAN'}</span>}
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button onClick={() => setDepositPlayer(p.id === depositPlayer ? null : p.id)}
                     style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(0,180,200,0.4)', background: 'rgba(0,180,200,0.1)', color: '#00b4c8', cursor: 'pointer', fontWeight: 600 }}>
                     💰 Záloha
                   </button>
-                  {!p.je_admin && (
-                    <button onClick={() => handleBan(p.id, p.je_banned)}
-                      style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: `1px solid ${p.je_banned ? 'rgba(74,222,128,0.4)' : 'rgba(196,18,48,0.4)'}`, background: p.je_banned ? 'rgba(74,222,128,0.1)' : 'rgba(196,18,48,0.1)', color: p.je_banned ? '#4ade80' : '#ff8080', cursor: 'pointer', fontWeight: 600 }}>
-                      {p.je_banned ? '✅ Unban' : '🚫 Ban'}
+                  {!p.je_admin && !p.je_banned && (
+                    <>
+                      <button onClick={() => handleBan24h(p.id)}
+                        style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(255,165,0,0.4)', background: 'rgba(255,165,0,0.1)', color: '#ffa500', cursor: 'pointer', fontWeight: 600 }}>
+                        ⏱ 24h
+                      </button>
+                      <button onClick={() => handleBan(p.id, false)}
+                        style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(196,18,48,0.4)', background: 'rgba(196,18,48,0.1)', color: '#ff8080', cursor: 'pointer', fontWeight: 600 }}>
+                        🚫 Ban
+                      </button>
+                    </>
+                  )}
+                  {!p.je_admin && p.je_banned && (
+                    <button onClick={() => handleBan(p.id, true)}
+                      style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(74,222,128,0.4)', background: 'rgba(74,222,128,0.15)', color: '#4ade80', cursor: 'pointer', fontWeight: 600, fontStyle: 'normal' }}>
+                      ✅ Unban
                     </button>
                   )}
                 </div>
@@ -124,7 +142,7 @@ export default function AdminPage() {
               </div>
               {depositPlayer === p.id && (
                 <div style={{ marginTop: '10px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <input type="number" min="1" placeholder="Záloha Kč"
+                  <input type="number" placeholder="Kč (- pro odepsání)"
                     value={depositAmt} onChange={e => setDepositAmt(e.target.value)}
                     style={{ flex: 1, padding: '7px 10px', borderRadius: '8px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontSize: '13px' }} />
                   <button onClick={() => handleDeposit(p.id)}
