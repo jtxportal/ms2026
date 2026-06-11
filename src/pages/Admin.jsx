@@ -7,7 +7,7 @@ import { formatKc } from '../lib/utils'
 const TABS = ['Hráči', 'Zápasy', 'Výsledky', 'Jackpot']
 
 export default function AdminPage() {
-  const { isAdmin } = useAuth()
+  const { isAdmin, user } = useAuth()
   const navigate    = useNavigate()
   const [tab, setTab]         = useState('Hráči')
   const [players, setPlayers] = useState([])
@@ -20,6 +20,35 @@ export default function AdminPage() {
   const [depositAmt,    setDepositAmt]    = useState('')
 
   useEffect(() => { if (!isAdmin) navigate('/'); else fetchAll() }, [isAdmin])
+
+  async function handleDeleteRequest(playerId, prezdivka) {
+    // Admin 1 žádá o odebrání
+    await supabase.from('profiles').update({ delete_requested_by: user?.id }).eq('id', playerId)
+    setMsg(`Žádost o odebrání ${prezdivka} odeslána. Čeká na potvrzení druhého admina.`)
+    setTimeout(() => setMsg(''), 4000)
+    fetchAll()
+  }
+
+  async function handleCancelDelete(playerId) {
+    await supabase.from('profiles').update({ delete_requested_by: null }).eq('id', playerId)
+    setMsg('Žádost o odebrání zrušena.')
+    setTimeout(() => setMsg(''), 2000)
+    fetchAll()
+  }
+
+  async function handleConfirmDelete(playerId, prezdivka) {
+    // Admin 2 potvrzuje - skutečné smazání
+    if (!window.confirm(`OPRAVDU smazat hráče ${prezdivka}? Tato akce je nevratná.`)) return
+    // Smazat sázky
+    await supabase.from('bets').delete().eq('user_id', playerId)
+    await supabase.from('longterm_bets').delete().eq('user_id', playerId)
+    await supabase.from('chat_messages').delete().eq('user_id', playerId)
+    // Smazat profil
+    await supabase.from('profiles').delete().eq('id', playerId)
+    setMsg(`Hráč ${prezdivka} byl odebrán ze soutěže.`)
+    setTimeout(() => setMsg(''), 4000)
+    fetchAll()
+  }
 
   async function fetchAll() {
     setLoading(true)
@@ -133,8 +162,41 @@ export default function AdminPage() {
                       ✅ Unban
                     </button>
                   )}
+                  {!p.je_admin && !p.delete_requested_by && (
+                    <button onClick={() => handleDeleteRequest(p.id, p.prezdivka)}
+                      style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(255,0,0,0.4)', background: 'rgba(255,0,0,0.08)', color: '#ff6060', cursor: 'pointer', fontWeight: 600 }}>
+                      🗑 Odebrat
+                    </button>
+                  )}
                 </div>
               </div>
+
+              {/* Čeká na potvrzení druhého admina */}
+              {p.delete_requested_by && (
+                <div style={{ margin: '8px 0', background: 'rgba(255,0,0,0.1)', border: '1px solid rgba(255,0,0,0.3)', borderRadius: '10px', padding: '10px 12px' }}>
+                  <p style={{ fontSize: '12px', color: '#ff8080', margin: '0 0 8px', fontWeight: 600 }}>
+                    ⚠️ Žádost o odebrání — čeká na potvrzení druhého admina
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {p.delete_requested_by !== user?.id && (
+                      <button onClick={() => handleConfirmDelete(p.id, p.prezdivka)}
+                        style={{ flex: 1, padding: '7px', borderRadius: '8px', background: 'rgba(196,18,48,0.8)', border: 'none', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '12px' }}>
+                        ✅ Potvrdit odebrání
+                      </button>
+                    )}
+                    <button onClick={() => handleCancelDelete(p.id)}
+                      style={{ flex: 1, padding: '7px', borderRadius: '8px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: '12px' }}>
+                      ✕ Zrušit žádost
+                    </button>
+                  </div>
+                  {p.delete_requested_by === user?.id && (
+                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: '6px 0 0' }}>
+                      Ty jsi podal žádost — potvrzení musí provést druhý admin.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <span>{p.jmeno} {p.prijmeni}</span>
                 {p.telefon && <span>📱 {p.telefon}</span>}
