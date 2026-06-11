@@ -2,12 +2,12 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 const NAV = [
-  { to: '/',           label: 'Domů',     icon: '🏠', end: true },
   { to: '/dlouhodoby', label: 'Tipy',     icon: '🎯' },
+  { to: '/',           label: 'Domů',     icon: '🏠', end: true },
   { to: '/zapasy',     label: 'Zápasy',   icon: '⚽' },
   { to: '/zebricek',   label: 'Žebříček', icon: '🏆' },
   { to: '/chat',       label: 'Chat',     icon: '💬' },
-  { to: '/pravidla',   label: 'Pravidla', icon: '📋' },
+  { to: '/sinda',      label: 'Šinďa',    icon: '🎭' },
   { to: '/profil',     label: 'Profil',   icon: '👤' },
 ]
 
@@ -38,7 +38,7 @@ export default function Layout({ children }) {
           {/* Logo + user */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: "20px" }}>🏆</span>
+              <img src={AFK_LOGO} alt="AFK" style={{ width: "28px", height: "28px", borderRadius: "50%", objectFit: "cover", border: "1px solid rgba(0,180,200,0.6)" }} />
               <span style={{
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 800, fontSize: '16px',
