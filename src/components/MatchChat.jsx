@@ -63,7 +63,7 @@ export default function MatchChat({ matchId, vykop }) {
     // Nejdřív načíst zprávy
     const { data: msgs, error: err } = await supabase
       .from('chat_messages')
-      .select('id, created_at, zprava, user_id')
+      .select('id, created_at, content, user_id')
       .eq('match_id', matchId)
       .order('created_at')
       .limit(100)
