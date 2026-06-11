@@ -1,6 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { AFK_LOGO, TROPHY } from '../lib/images'
 
 const NAV = [
   { to: '/dlouhodoby', label: 'Tipy',     icon: '🎯' },
@@ -8,6 +7,7 @@ const NAV = [
   { to: '/zapasy',     label: 'Zápasy',   icon: '⚽' },
   { to: '/zebricek',   label: 'Žebříček', icon: '🏆' },
   { to: '/chat',       label: 'Chat',     icon: '💬' },
+  { to: '/pravidla',   label: 'Pravidla', icon: '📋' },
   { to: '/profil',     label: 'Profil',   icon: '👤' },
 ]
 
