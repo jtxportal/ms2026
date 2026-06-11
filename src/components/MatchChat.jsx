@@ -40,7 +40,12 @@ export default function MatchChat({ matchId, vykop, nazevD, nazevH }) {
         event: 'INSERT', schema: 'public',
         table: 'chat_messages', filter: `match_id=eq.${matchId}`
       }, payload => {
-        setMessages(m => [...m, payload.new])
+        // Přidat přezdívku k nové zprávě
+        const newMsg = payload.new
+        supabase.from('profiles').select('prezdivka').eq('id', newMsg.user_id).single()
+          .then(({ data }) => {
+            setMessages(m => [...m, { ...newMsg, profiles: data }])
+          })
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
       })
       .subscribe()
@@ -56,7 +61,7 @@ export default function MatchChat({ matchId, vykop, nazevD, nazevH }) {
     setLoading(true)
     const { data } = await supabase
       .from('chat_messages')
-      .select('*, profiles(prezdivka)')
+      .select('id, created_at, zprava, user_id, profiles!chat_messages_user_id_fkey(prezdivka)')
       .eq('match_id', matchId)
       .order('created_at')
       .limit(100)
