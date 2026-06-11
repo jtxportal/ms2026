@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { formatKc } from '../lib/utils'
 
-const TABS = ['Hráči', 'Zápasy', 'Výsledky', 'Jackpot']
+const TABS = ['Hráči', 'Výsledky', 'Okno', 'Zápasy', 'Jackpot']
 
 export default function AdminPage() {
   const { isAdmin, user } = useAuth()
@@ -16,6 +16,9 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [settle, setSettle]   = useState({})
   const [msg, setMsg]         = useState('')
+  const [oknoText, setOknoText] = useState('')
+  const [oknoImg,  setOknoImg]  = useState('')
+  const [oknoId,   setOknoId]   = useState(null)
   const [depositPlayer, setDepositPlayer] = useState(null)
   const [depositAmt,    setDepositAmt]    = useState('')
 
@@ -52,14 +55,16 @@ export default function AdminPage() {
 
   async function fetchAll() {
     setLoading(true)
-    const [{ data: prof }, { data: m }, { data: j }] = await Promise.all([
+    const [{ data: prof }, { data: m }, { data: j }, { data: okno }] = await Promise.all([
       supabase.from('profiles').select('*').order('created_at'),
       supabase.from('matches').select('*, domaci:tym_domaci(nazev), hosti:tym_hosti(nazev)').order('vykop'),
       supabase.from('jackpot').select('zustatek').single(),
+      supabase.from('admin_notices').select('*').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
     ])
     setPlayers(prof ?? [])
     setMatches(m ?? [])
     setJackpot(j?.zustatek ?? 0)
+    if (okno) { setOknoText(okno.content ?? ''); setOknoImg(okno.image_url ?? ''); setOknoId(okno.id) }
     setLoading(false)
   }
 
@@ -103,6 +108,20 @@ export default function AdminPage() {
     if (error) { setMsg('Chyba: ' + error.message); return }
     setMsg('Zápas vyhodnocen ✅')
     setTimeout(() => setMsg(''), 3000)
+    fetchAll()
+  }
+
+  async function saveOkno() {
+    if (!oknoText.trim()) return
+    setSaving('okno')
+    if (oknoId) {
+      await supabase.from('admin_notices').update({ content: oknoText.trim(), image_url: oknoImg.trim() || null, updated_at: new Date().toISOString() }).eq('id', oknoId)
+    } else {
+      await supabase.from('admin_notices').insert({ content: oknoText.trim(), image_url: oknoImg.trim() || null, autor: 'Šinděa' })
+    }
+    setMsg('Šinděovo vokno uloženo ✅')
+    setTimeout(() => setMsg(''), 2000)
+    setSaving(null)
     fetchAll()
   }
 
@@ -249,6 +268,34 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* === OKNO === */}
+      {tab === 'Okno' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ background: 'rgba(232,160,32,0.08)', border: '1px solid rgba(232,160,32,0.3)', borderRadius: '14px', padding: '16px' }}>
+            <h3 style={{ fontWeight: 700, fontSize: '15px', color: '#e8a020', margin: '0 0 14px' }}>🎭 Šinďovo vtipný vokno</h3>
+            <div style={{ marginBottom: '10px' }}>
+              <label style={{ display: 'block', fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px', textTransform: 'uppercase' }}>Text / vtip / zpráva</label>
+              <textarea value={oknoText} onChange={e => setOknoText(e.target.value)} rows={5}
+                placeholder="Napiš vtip nebo důležitou zprávu..."
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: '13px', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }} />
+            </div>
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px', textTransform: 'uppercase' }}>URL obrázku (nepovinné)</label>
+              <input value={oknoImg} onChange={e => setOknoImg(e.target.value)}
+                placeholder="https://... jpg/png/gif"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', fontSize: '13px', boxSizing: 'border-box' }} />
+              {oknoImg && <img src={oknoImg} alt="" style={{ marginTop: '8px', maxWidth: '100%', maxHeight: '150px', borderRadius: '6px', objectFit: 'contain' }} onError={e => e.target.style.display='none'} />}
+            </div>
+            <button onClick={saveOkno} disabled={!oknoText.trim() || saving === 'okno'}
+              style={{ width: '100%', padding: '11px', borderRadius: '10px', background: 'linear-gradient(135deg, #e8a020, #c87010)', border: 'none', color: '#000', fontWeight: 700, cursor: 'pointer', fontSize: '14px', opacity: !oknoText.trim() ? 0.5 : 1 }}>
+              {saving === 'okno' ? 'Ukládám…' : oknoId ? '✅ Aktualizovat vokno' : '🎭 Zveřejnit'}
+            </button>
+            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: '8px' }}>
+              Zobrazí se na domovské stránce pod bannerem
+            </p>
+          </div>
+        </div>
+      )}
       {/* === ZÁPASY === */}
       {tab === 'Zápasy' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
