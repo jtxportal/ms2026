@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import MatchCard from '../components/MatchCard'
 import { formatKc, formatKcAbs } from '../lib/utils'
+import SindaWidget from '../components/SindaWidget'
 
 export default function Home() {
   const { user } = useAuth()
@@ -106,82 +107,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Pravidla — rozklikávací s lepším kontrastem */}
-      <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', padding: '16px' }}>
-        <button
-          onClick={() => setShowRules(r => !r)}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '18px' }}>📋</span>
-            <span style={{ fontWeight: 700, fontSize: '15px', color: '#fff' }}>Pravidla soutěže</span>
-          </div>
-          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '18px' }}>{showRules ? '▲' : '▼'}</span>
-        </button>
-
-        {showRules && (
-          <div style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
-
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', lineHeight: 1.6, margin: '0 0 14px' }}>
-              Soukromá tipovačka pro kamarády a fanoušky <strong style={{ color: '#00b4c8' }}>AFK Kácov</strong>.
-              Nejde o žádnou sázkovou kancelář ani o podnikání — vše se přerozdělí mezi účastníky. Nikdo nic nebere pro sebe.
-            </p>
-
-            {/* Jak to funguje */}
-            <div style={{ background: 'rgba(0,180,200,0.12)', border: '1px solid rgba(0,180,200,0.3)', borderRadius: '12px', padding: '12px', marginBottom: '10px' }}>
-              <p style={{ fontWeight: 700, color: '#00b4c8', fontSize: '13px', margin: '0 0 6px' }}>⚽ Jak se tipuje</p>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', margin: 0, lineHeight: 1.5 }}>
-                Tipuje se <strong style={{ color: '#fff' }}>přesný výsledek po základní hrací době</strong>. Prodloužení ani penalty se nezapočítávají.
-              </p>
-            </div>
-
-            {/* Sázky */}
-            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', marginBottom: '10px' }}>
-              <p style={{ fontWeight: 700, color: '#e8a020', fontSize: '13px', margin: '0 0 8px' }}>💰 Výše sázek</p>
-              {[['Skupiny', '10 Kč'], ['1/32, 1/16, osmifinále, čtvrtfinále', '20 Kč'], ['Semifinále', '50 Kč'], ['Finále', '100 Kč'], ['Vítěz MS + nejlepší střelec', '20 Kč']].map(([k, v]) => (
-                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: '13px' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.75)' }}>{k}</span>
-                  <strong style={{ color: '#fff' }}>{v}</strong>
-                </div>
-              ))}
-            </div>
-
-            {/* Bank */}
-            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', marginBottom: '10px' }}>
-              <p style={{ fontWeight: 700, color: '#e8a020', fontSize: '13px', margin: '0 0 6px' }}>🏦 Bank zápasu</p>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', margin: '0 0 6px', lineHeight: 1.5 }}>
-                Bank = součet sázek na daný zápas. Rozdělí se rovným dílem mezi výherce. Nikdo netrefí → přechází do jackpotu.
-              </p>
-              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', margin: 0 }}>
-                Příklad: 30 hráčů × 10 Kč = 300 Kč. Trefí 3 hráči → každý dostane 100 Kč.
-              </p>
-            </div>
-
-            {/* Změna tipu */}
-            <div style={{ background: 'rgba(232,160,32,0.1)', border: '1px solid rgba(232,160,32,0.3)', borderRadius: '12px', padding: '12px', marginBottom: '10px' }}>
-              <p style={{ fontWeight: 700, color: '#e8a020', fontSize: '13px', margin: '0 0 6px' }}>✏️ Změna tipu</p>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', margin: 0, lineHeight: 1.5 }}>
-                Každý tip lze <strong style={{ color: '#fff' }}>jednou změnit</strong> před výkopem. Po zahájení je uzamčen.
-              </p>
-            </div>
-
-            {/* Jackpot po finále */}
-            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', marginBottom: '10px' }}>
-              <p style={{ fontWeight: 700, color: '#e8a020', fontSize: '13px', margin: '0 0 6px' }}>🏆 Jackpot po finále</p>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', margin: '0 0 6px', lineHeight: 1.5 }}>
-                Pokud nikdo netrefí přesný výsledek finálového zápasu, celý jackpot se rozdělí mezi nejlepší hráče žebříčku:
-              </p>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', margin: 0 }}>
-                <strong style={{ color: '#e8a020' }}>1. místo 50%</strong> · <strong style={{ color: '#e8a020' }}>2. místo 33%</strong> · <strong style={{ color: '#e8a020' }}>3. místo 17%</strong> z celkové nerozdělené částky.
-              </p>
-            </div>
-
-            <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: '8px 0 0' }}>
-              Registrací potvrzuješ závazek uhradit záporný zůstatek. Organizátoři si neodečítají provizi.
-            </p>
-          </div>
-        )}
-      </div>
+      {/* Šinděovo vtipný vokno */}
+      <SindaWidget />
 
       {/* Moje statistiky */}
       {myStats && (
