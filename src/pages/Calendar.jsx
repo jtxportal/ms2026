@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import MatchCard from '../components/MatchCard'
+import MatchChat from '../components/MatchChat'
 import { toCEST, SKUPINY } from '../lib/utils'
 
 const TABS = [
@@ -161,11 +162,15 @@ export default function Calendar() {
                 </h3>
                 <div className="space-y-3">
                   {dayMatches.map(m => (
-                    <MatchCard
-                      key={m.id}
-                      match={m}
-                      myBet={myBets[m.id]}
-                    />
+                    <div key={m.id}>
+                      <MatchCard match={m} myBet={myBets[m.id]} />
+                      <MatchChat
+                        matchId={m.id}
+                        vykop={m.vykop}
+                        nazevD={m.domaci?.nazev}
+                        nazevH={m.hosti?.nazev}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
