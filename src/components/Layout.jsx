@@ -7,7 +7,7 @@ const NAV = [
   { to: '/zapasy',     label: 'Zápasy',   icon: '⚽' },
   { to: '/zebricek',   label: 'Žebríček', icon: '🏆' },
   { to: '/chat',       label: 'Chat',     icon: '💬' },
-  { to: '/sinda',      label: 'Šinděa',    icon: '🎭' },
+  { to: '/pravidla',   label: 'Pravidla', icon: '📋' },
   { to: '/profil',     label: 'Profil',   icon: '👤' },
 ]
 
