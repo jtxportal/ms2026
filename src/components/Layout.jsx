@@ -2,8 +2,8 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 const NAV = [
-  { to: '/dlouhodoby', label: 'Tipy',     icon: '🎯' },
   { to: '/',           label: 'Domů',     icon: '🏠', end: true },
+  { to: '/dlouhodoby', label: 'Tipy',     icon: '🎯' },
   { to: '/zapasy',     label: 'Zápasy',   icon: '⚽' },
   { to: '/zebricek',   label: 'Žebříček', icon: '🏆' },
   { to: '/chat',       label: 'Chat',     icon: '💬' },
