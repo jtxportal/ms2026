@@ -22,6 +22,7 @@ export default function Calendar() {
   const [tab,     setTab]         = useState('dnes')
   const [loading, setLoading]     = useState(true)
   const [skupinaFilter, setSkupinaFilter] = useState(null)
+  const todayRef = useRef(null)
 
   useEffect(() => {
     if (!user) return
