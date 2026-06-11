@@ -90,7 +90,7 @@ Jinými slovy — peníze se pouze přerozdělí od těch, kteří fotbalu rozum
     title: 'Chat a komunikace',
     icon: '💬',
     color: '#00b4c8',
-    text: 'Po dobu mistrovství bude otevřen společný chat pro všechny účastníky. Ke každému zápasu je k dispozici samostatná diskuze. Prosíme všechny o slušné a sportovní chování.\n\nAdministrátor soutěže Venca Šyndílek a Bob má právo při opakovaném porušování slušného chování účastníka zabanovat nebo vyloučit ze soutěže.'
+    text: 'Po dobu mistrovství bude otevřen společný chat pro všechny účastníky. Ke každému zápasu je k dispozici samostatná diskuze. Prosíme všechny o slušné a sportovní chování.\n\nAdministrátor soutěže Venca Šinďa a Bob má právo při opakovaném porušování slušného chování účastníka zabanovat nebo vyloučit ze soutěže.'
   },
   {
     title: 'Finanční vyrovnání',
