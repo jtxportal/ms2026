@@ -10,6 +10,8 @@ export default function Home() {
   const navigate  = useNavigate()
 
   const [jackpot,   setJackpot]   = useState(null)
+  const [nextMatch,  setNextMatch]  = useState(null)
+  const [nextBank,   setNextBank]   = useState(0)
   const [upcoming,  setUpcoming]  = useState([])
   const [standings, setStandings] = useState([])
   const [myBets,    setMyBets]    = useState({})
@@ -19,13 +21,34 @@ export default function Home() {
 
   useEffect(() => {
     if (!user) return
-    Promise.all([fetchJackpot(), fetchUpcoming(), fetchStandings(), fetchMyBets(), fetchMyStats()])
+    Promise.all([fetchJackpot(), fetchNextMatch(), fetchUpcoming(), fetchStandings(), fetchMyBets(), fetchMyStats()])
       .finally(() => setLoading(false))
   }, [user])
 
   async function fetchJackpot() {
     const { data } = await supabase.from('jackpot').select('zustatek').single()
     setJackpot(data?.zustatek ?? 0)
+  }
+
+  async function fetchNextMatch() {
+    // Najít nejbližší zápas
+    const { data: m } = await supabase
+      .from('matches')
+      .select('*, domaci:tym_domaci(nazev), hosti:tym_hosti(nazev)')
+      .gte('vykop', new Date().toISOString())
+      .eq('vyhodnoceno', false)
+      .order('vykop')
+      .limit(1)
+      .single()
+    if (!m) return
+    setNextMatch(m)
+    // Součet sázek na tento zápas
+    const { data: betsSum } = await supabase
+      .from('bets')
+      .select('castka')
+      .eq('match_id', m.id)
+    const sum = (betsSum ?? []).reduce((a, b) => a + (b.castka ?? 0), 0)
+    setNextBank(sum)
   }
   async function fetchUpcoming() {
     const { data } = await supabase
@@ -57,17 +80,31 @@ export default function Home() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-      {/* Jackpot */}
-      <div style={{ background: 'linear-gradient(135deg, #e8a020, #d4900a)', borderRadius: '16px', padding: '18px', boxShadow: '0 4px 20px rgba(232,160,32,0.3)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <p style={{ color: 'rgba(0,0,0,0.6)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 4px' }}>💰 Jackpot</p>
-            <p style={{ fontSize: '30px', fontWeight: 900, color: '#000', margin: '0 0 4px' }}>{formatKcAbs(jackpot)}</p>
-            <p style={{ fontSize: '12px', color: 'rgba(0,0,0,0.5)', margin: 0 }}>Přechází na příští nevyhodnocený zápas</p>
-          </div>
-          <div style={{ fontSize: '48px' }}>🏆</div>
+      {/* Banner - v dalším zápase se hraje o */}
+      {nextMatch && (
+        <div style={{ background: 'linear-gradient(135deg, #e8a020, #d4900a)', borderRadius: '16px', padding: '16px 18px', boxShadow: '0 4px 20px rgba(232,160,32,0.3)' }}>
+          <p style={{ color: 'rgba(0,0,0,0.6)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 4px' }}>
+            ⚽ V dalším zápase se hraje o
+          </p>
+          <p style={{ fontSize: '32px', fontWeight: 900, color: '#000', margin: '0 0 2px', lineHeight: 1 }}>
+            {formatKcAbs((jackpot ?? 0) + nextBank)}
+          </p>
+          <p style={{ fontSize: '13px', color: 'rgba(0,0,0,0.6)', margin: '0 0 6px' }}>
+            {nextMatch.domaci?.nazev} vs {nextMatch.hosti?.nazev}
+          </p>
+          {nextBank > 0 && jackpot > 0 && (
+            <p style={{ fontSize: '11px', color: 'rgba(0,0,0,0.5)', margin: 0 }}>
+              Jackpot {formatKcAbs(jackpot)} + sázky {formatKcAbs(nextBank)}
+            </p>
+          )}
         </div>
-      </div>
+      )}
+      {!nextMatch && jackpot !== null && (
+        <div style={{ background: 'linear-gradient(135deg, #e8a020, #d4900a)', borderRadius: '16px', padding: '16px 18px' }}>
+          <p style={{ color: 'rgba(0,0,0,0.6)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 4px' }}>💰 Jackpot</p>
+          <p style={{ fontSize: '32px', fontWeight: 900, color: '#000', margin: 0 }}>{formatKcAbs(jackpot)}</p>
+        </div>
+      )}
 
       {/* Pravidla — rozklikávací s lepším kontrastem */}
       <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', padding: '16px' }}>
