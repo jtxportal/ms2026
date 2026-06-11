@@ -92,7 +92,7 @@ export default function MatchChat({ matchId, vykop }) {
     const { error: err } = await supabase.from('chat_messages').insert({
       match_id: matchId,
       user_id:  user.id,
-      zprava:   text.trim(),
+      content:  text.trim(),
     })
 
     if (err) {
@@ -151,7 +151,7 @@ export default function MatchChat({ matchId, vykop }) {
                     border: `1px solid ${isMe ? 'rgba(232,160,32,0.25)' : 'rgba(255,255,255,0.1)'}`,
                     color: 'rgba(255,255,255,0.85)',
                   }}>
-                    {m.zprava}
+                    {m.content}
                   </div>
                 </div>
               )
