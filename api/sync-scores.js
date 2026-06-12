@@ -96,8 +96,8 @@ export default async function handler(req, res) {
     })
 
     await supabase.from('matches').update({
-      skore_domaci: homeScore,
-      skore_hosti:  awayScore,
+      live_home: homeScore,
+      live_away: awayScore,
       live_status:  fix.time_elapsed ?? '',
       home_scorers: fix.home_scorers ?? null,
       away_scorers: fix.away_scorers ?? null,
@@ -107,8 +107,8 @@ export default async function handler(req, res) {
     if (finished) {
       const { error } = await supabase.rpc('settle_match', {
         p_match_id: bestMatch.id,
-        p_skore_domaci: homeScore,
-        p_skore_hosti: awayScore,
+        p_live_home: homeScore,
+        p_live_away: awayScore,
       })
       if (error) errors.push(error.message)
       else settled++
