@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import MatchCard from '../components/MatchCard'
 import MatchChat    from '../components/MatchChat'
 import BetsReveal   from '../components/BetsReveal'
+import LiveScore     from '../components/LiveScore'
 import { toCEST, SKUPINY } from '../lib/utils'
 
 const TABS = [
@@ -179,6 +180,8 @@ export default function Calendar() {
                         {dayMatches.map(m => (
                           <div key={m.id}>
                             <MatchCard match={m} myBet={myBets[m.id]} />
+                            <LiveScore matchId={m.id} vykop={m.vykop} />
+                      <LiveScore matchId={m.id} vykop={m.vykop} />
                             <BetsReveal matchId={m.id} vykop={m.vykop} vyhodnoceno={m.vyhodnoceno} skore_domaci={m.skore_domaci} skore_hosti={m.skore_hosti} />
                             <MatchChat matchId={m.id} vykop={m.vykop} nazevD={m.domaci?.nazev} nazevH={m.hosti?.nazev} />
                           </div>
@@ -207,6 +210,7 @@ export default function Calendar() {
                   {dayMatches.map(m => (
                     <div key={m.id}>
                       <MatchCard match={m} myBet={myBets[m.id]} />
+                      <LiveScore matchId={m.id} vykop={m.vykop} />
                       <BetsReveal
                         matchId={m.id}
                         vykop={m.vykop}
