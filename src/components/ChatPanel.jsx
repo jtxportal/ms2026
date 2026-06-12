@@ -72,7 +72,7 @@ export default function ChatPanel({ roomType = 'tournament', matchId = null, tit
           // Doplnit přezdívku (payload neobsahuje join)
           const { data } = await supabase
             .from('chat_messages')
-            .select(`id, content, created_at, profiles:user_id ( prezdivka )`)
+            .select(`id, content, zprava, created_at, profiles:user_id ( prezdivka )`)
             .eq('id', payload.new.id)
             .single()
 
@@ -103,6 +103,7 @@ export default function ChatPanel({ roomType = 'tournament', matchId = null, tit
       match_id:  roomType === 'match' ? matchId : null,
       user_id:   user.id,
       content:   text,
+      zprava:    text,
     })
 
     if (error) {
