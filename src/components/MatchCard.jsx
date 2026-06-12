@@ -16,9 +16,9 @@ export default function MatchCard({ match, myBet, compact = false }) {
   const flagH  = typeof hosti  === 'object' ? hosti?.vlajka_url  : null
 
   const hasBet   = myBet != null
-  const hasResult = match.vysledek_domaci != null || match.skore_domaci != null
-  const scoreD   = match.vysledek_domaci ?? match.skore_domaci
-  const scoreH   = match.vysledek_hosti  ?? match.skore_hosti
+  const scoreD   = match.vysledek_domaci ?? match.live_home
+  const scoreH   = match.vysledek_hosti  ?? match.live_away
+  const hasResult = scoreD != null
 
   function handleTip() {
     if (!locked) navigate(`/tip/${match.id}`)
