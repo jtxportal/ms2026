@@ -58,7 +58,7 @@ export default function MatchCard({ match, myBet, compact = false }) {
         {/* Výsledek nebo skóre */}
         <div className="flex flex-col items-center min-w-[60px]">
           {hasResult ? (
-            <div className="text-xl font-bold text-gray-900">
+            <div style={{ fontSize: "22px", fontWeight: 800, color: "#fff" }}>
               {scoreD} : {scoreH}
             </div>
           ) : (
