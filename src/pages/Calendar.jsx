@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import MatchCard from '../components/MatchCard'
-import MatchChat from '../components/MatchChat'
+import MatchChat    from '../components/MatchChat'
+import BetsReveal   from '../components/BetsReveal'
 import { toCEST, SKUPINY } from '../lib/utils'
 
 const TABS = [
@@ -166,6 +167,13 @@ export default function Calendar() {
                   {dayMatches.map(m => (
                     <div key={m.id}>
                       <MatchCard match={m} myBet={myBets[m.id]} />
+                      <BetsReveal
+                        matchId={m.id}
+                        vykop={m.vykop}
+                        vyhodnoceno={m.vyhodnoceno}
+                        skore_domaci={m.skore_domaci}
+                        skore_hosti={m.skore_hosti}
+                      />
                       <MatchChat
                         matchId={m.id}
                         vykop={m.vykop}
