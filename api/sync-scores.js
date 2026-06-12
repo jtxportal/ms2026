@@ -67,9 +67,11 @@ export default async function handler(req, res) {
 
       // Ulozit skore
       await supabase.from('matches').update({
-        skore_domaci: homeScore,
-        skore_hosti:  awayScore,
-        live_status:  fix.time_elapsed ?? '',
+        skore_domaci:  homeScore,
+        skore_hosti:   awayScore,
+        live_status:   fix.time_elapsed ?? '',
+        home_scorers:  fix.home_scorers ?? null,
+        away_scorers:  fix.away_scorers ?? null,
       }).eq('id', match.id)
       updated++
 
