@@ -3,7 +3,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const WC_API = 'https://worldcup2026api.vercel.app'
+const WC_API = 'https://worldcup26.ir'
 
 export default async function handler(req, res) {
   const secret = req.query.secret || req.headers['x-cron-secret']
@@ -18,12 +18,12 @@ export default async function handler(req, res) {
 
   try {
     // Nacist vsechny zapasy z free API
-    const apiRes = await fetch(`${WC_API}/get/matches`, {
+    const apiRes = await fetch(`${WC_API}/get/games`, {
       headers: { 'Accept': 'application/json' }
     })
     
     if (!apiRes.ok) {
-      return res.status(500).json({ error: `API error: ${apiRes.status}`, url: `${WC_API}/get/matches` })
+      return res.status(500).json({ error: `API error: ${apiRes.status}`, url: `${WC_API}/get/games` })
     }
     
     const matches_api = await apiRes.json()
