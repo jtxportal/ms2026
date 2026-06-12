@@ -14,6 +14,8 @@ import LongtermBets   from './pages/LongtermBets'
 import TournamentChat from './pages/TournamentChat'
 import Profile        from './pages/Profile'
 import AdminPage      from './pages/Admin'
+import Pravidla       from './pages/Pravidla'
+import Sinda          from './pages/Sinda'
 
 function AppShell({ children }) {
   return (
@@ -39,6 +41,8 @@ export default function App() {
           <Route path="/chat"        element={<AppShell><TournamentChat /></AppShell>} />
           <Route path="/dlouhodoby"  element={<AppShell><LongtermBets /></AppShell>} />
           <Route path="/profil"      element={<AppShell><Profile /></AppShell>} />
+          <Route path="/pravidla"    element={<AppShell><Pravidla /></AppShell>} />
+          <Route path="/sinda"       element={<AppShell><Sinda /></AppShell>} />
 
           <Route path="/admin" element={
             <ProtectedRoute adminOnly>

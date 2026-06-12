@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -105,6 +106,7 @@ const PLAYERS = [
 
 export default function LongtermBets() {
   const { user } = useAuth()
+  const navigate  = useNavigate()
 
   const [myBets,    setMyBets]    = useState({ vitez: null, strelec: null })
   const [vitezQ,    setVitezQ]    = useState('')
@@ -275,9 +277,22 @@ export default function LongtermBets() {
         )}
       </div>
 
-      <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.35)', margin: 0 }}>
-        Bank se dělí rovným dílem · Nikdo netrefí → bank přechází do jackpotu
-      </p>
+      <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px 16px', textAlign: 'center' }}>
+        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', margin: '0 0 10px' }}>
+          Bank se dělí rovným dílem · Nikdo netrefí → bank přechází do jackpotu
+        </p>
+        <button
+          onClick={() => navigate('/zapasy')}
+          style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'linear-gradient(135deg, rgba(0,180,200,0.2), rgba(0,180,200,0.1))', border: '1px solid rgba(0,180,200,0.4)', color: '#00b4c8', fontWeight: 700, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+        >
+          <span>⚽</span>
+          <span>Tipovat jednotlivé zápasy</span>
+          <span style={{ fontSize: '16px' }}>→</span>
+        </button>
+        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', margin: '6px 0 0' }}>
+          Přejde na dnešní zápasy v záložce Zápasy
+        </p>
+      </div>
     </div>
   )
 }

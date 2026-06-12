@@ -10,7 +10,7 @@ const RULES = [
   { title: 'Bank zápasu', text: 'Sázky na zápas tvoří společný bank. Rozdělí se mezi výherce. Nikdo netrefí → přechází do jackpotu.' },
   { title: 'Změna tipu', text: 'Každý tip lze jednou změnit před výkopem. Po zahájení je uzamčen.' },
   { title: 'Jackpot po finále', text: '1. místo 50% · 2. místo 33% · 3. místo 17%' },
-  { title: 'Chat', text: 'Turnajový chat + chat ke každému zápasu. Admini Venca Šyndílek a Bob mohou hráče zabanovat.' },
+  { title: 'Chat', text: 'Turnajový chat + chat ke každému zápasu. Admini Venca Šinďa a Bob mohou hráče zabanovat.' },
   { title: 'Finanční vyrovnání', text: 'Registrací potvrzuješ závazek uhradit záporný zůstatek po MS. Organizátoři si neodečítají provizi.' },
 ]
 

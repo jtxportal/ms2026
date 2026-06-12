@@ -1,13 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { AFK_LOGO, TROPHY } from '../lib/images'
 
 const NAV = [
-  { to: '/dlouhodoby', label: 'Tipy',     icon: '🎯' },
   { to: '/',           label: 'Domů',     icon: '🏠', end: true },
+  { to: '/dlouhodoby', label: 'Tipy',     icon: '🎯' },
   { to: '/zapasy',     label: 'Zápasy',   icon: '⚽' },
-  { to: '/zebricek',   label: 'Žebříček', icon: '🏆' },
+  { to: '/zebricek',   label: 'Žebríček', icon: '🏆' },
   { to: '/chat',       label: 'Chat',     icon: '💬' },
+  { to: '/pravidla',   label: 'Pravidla', icon: '📋' },
   { to: '/profil',     label: 'Profil',   icon: '👤' },
 ]
 
@@ -38,7 +38,7 @@ export default function Layout({ children }) {
           {/* Logo + user */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <img src={AFK_LOGO} alt="AFK" style={{ width: "28px", height: "28px", borderRadius: "50%", objectFit: "cover", border: "1px solid rgba(0,180,200,0.6)" }} />
+              <span style={{ fontSize: "18px" }}>🏆</span>
               <span style={{
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 800, fontSize: '16px',
