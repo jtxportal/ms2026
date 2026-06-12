@@ -103,6 +103,26 @@ export default function AdminPage() {
     fetchAll()
   }
 
+  async function handleResetPassword(playerId, prezdivka) {
+    if (!window.confirm(`Resetovat heslo hráče ${prezdivka} na "chytrak"?`)) return
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ targetId: playerId }),
+      })
+      const out = await res.json()
+      if (!res.ok) throw new Error(out.error || 'Reset se nezdařil')
+      flash(`Heslo hráče ${prezdivka} resetováno na: chytrak`)
+    } catch (e) {
+      flash(`Chyba: ${e.message}`)
+    }
+  }
+
   async function handleConfirmDelete(playerId, prezdivka) {
     if (!window.confirm(`Opravdu smazat hráče ${prezdivka}? Nevratná akce.`)) return
     await supabase.from('bets').delete().eq('user_id', playerId)
@@ -197,6 +217,7 @@ export default function AdminPage() {
                 </div>
                 <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                   <button onClick={() => setDepositPlayer(depositPlayer === p.id ? null : p.id)} style={S.btn('#00b4c8')}>💰</button>
+                  <button onClick={() => handleResetPassword(p.id, p.prezdivka)} style={S.btn('#e8a020')} title="Reset hesla na chytrak">🔑</button>
                   {!p.je_admin && !p.je_banned && (
                     <>
                       <button onClick={() => handleBan24h(p.id)} style={S.btn('#ffa500')}>⏱24h</button>
