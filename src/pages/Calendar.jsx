@@ -179,7 +179,7 @@ export default function Calendar() {
                         {dayMatches.map(m => (
                           <div key={m.id}>
                             <MatchCard match={m} myBet={myBets[m.id]} />
-                            <BetsReveal matchId={m.id} vykop={m.vykop} vyhodnoceno={m.vyhodnoceno} skore_domaci={m.skore_domaci} skore_hosti={m.skore_hosti} />
+                            <BetsReveal matchId={m.id} vykop={m.vykop} vyhodnoceno={m.vyhodnoceno} skore_domaci={m.vysledek_domaci} skore_hosti={m.vysledek_hosti} />
                             <MatchChat matchId={m.id} vykop={m.vykop} nazevD={m.domaci?.nazev} nazevH={m.hosti?.nazev} />
                           </div>
                         ))}
@@ -211,8 +211,8 @@ export default function Calendar() {
                         matchId={m.id}
                         vykop={m.vykop}
                         vyhodnoceno={m.vyhodnoceno}
-                        skore_domaci={m.skore_domaci}
-                        skore_hosti={m.skore_hosti}
+                        skore_domaci={m.vysledek_domaci}
+                        skore_hosti={m.vysledek_hosti}
                       />
                       <MatchChat
                         matchId={m.id}

@@ -10,9 +10,9 @@ export default function BetsReveal({ matchId, vykop, vyhodnoceno, skore_domaci, 
   const [count,   setCount]   = useState(0)
 
   const kicked = new Date() > new Date(vykop)
-  if (!kicked) return null  // před výkopem nic nezobrazovat
 
   useEffect(() => {
+    if (!kicked) return  // před výkopem nenačítat
     // Načíst summary (bank + počet) vždy
     supabase
       .from('bets')
@@ -23,7 +23,9 @@ export default function BetsReveal({ matchId, vykop, vyhodnoceno, skore_domaci, 
         setBank(sum)
         setCount((data ?? []).length)
       })
-  }, [matchId])
+  }, [matchId, kicked])
+
+  if (!kicked) return null  // před výkopem nic nezobrazovat
 
   async function fetchBets() {
     setLoading(true)

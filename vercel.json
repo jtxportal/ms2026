@@ -1,18 +1,1 @@
-{
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/"
-    }
-  ],
-  "crons": [
-    {
-      "path": "/api/sync-scores?secret=ms2026kacov",
-      "schedule": "*/5 * * * *"
-    }
-  ]
-}
+{"rewrites":[{"source":"/api/(.*)","destination":"/api/$1"},{"source":"/(.*)","destination":"/"}]}

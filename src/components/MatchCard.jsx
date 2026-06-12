@@ -15,9 +15,13 @@ export default function MatchCard({ match, myBet, compact = false }) {
   const flagD  = typeof domaci === 'object' ? domaci?.vlajka_url : null
   const flagH  = typeof hosti  === 'object' ? hosti?.vlajka_url  : null
 
-  const hasBet   = myBet != null
-  const scoreD   = match.vysledek_domaci ?? match.live_home
-  const scoreH   = match.vysledek_hosti  ?? match.live_away
+  const hasBet    = myBet != null
+  const isLive    = ['1H','HT','2H','ET','BT','P','LIVE'].includes(match.live_status)
+  const isEnded   = ['FT','AET','PEN','finished'].includes(match.live_status)
+  const isSettled = match.vyhodnoceno === true
+  // Oficiální výsledek až po vyhodnocení; jinak živé skóre; u nezačatých nic.
+  const scoreD    = isSettled ? match.vysledek_domaci : (isLive || isEnded ? match.live_home : null)
+  const scoreH    = isSettled ? match.vysledek_hosti  : (isLive || isEnded ? match.live_away : null)
   const hasResult = scoreD != null
 
   function handleTip() {
@@ -86,7 +90,7 @@ export default function MatchCard({ match, myBet, compact = false }) {
       {/* Uživatelův tip */}
       {hasBet && (
         <div className={`mt-3 rounded-xl px-3 py-1.5 text-center text-sm
-          ${hasResult
+          ${isSettled
             ? (myBet.tip_domaci === match.vysledek_domaci &&
                myBet.tip_hosti  === match.vysledek_hosti)
               ? 'bg-pitch-100 text-pitch-700'
@@ -94,7 +98,7 @@ export default function MatchCard({ match, myBet, compact = false }) {
             : 'bg-blue-50 text-blue-700'
           }`}
         >
-          {hasResult
+          {isSettled
             ? (myBet.tip_domaci === match.vysledek_domaci &&
                myBet.tip_hosti  === match.vysledek_hosti)
               ? `✅ Trefil jsi! Tip: ${myBet.tip_domaci}:${myBet.tip_hosti} · Výhra: ${myBet.vyhra} Kč`
