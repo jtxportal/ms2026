@@ -53,10 +53,14 @@ export default async function handler(req, res) {
       // Najit odpovidajici zapas v DB (+-8 hodin kvuli casovym pasmum)
       const match = dbMatches?.find(m => {
         const diff = Math.abs(new Date(m.vykop) - fixDate) / 1000 / 60
-        return diff < 480 // 8 hodin
+        return diff < 720 // 12 hodin - pokryje rozdil CEST vs US/Mexico time
       })
 
-      if (!match) continue
+      if (!match) {
+        // Debug - zobrazit prvni nesparovany
+        if (debug.length === 0) debug.push({ no_match: fix.home_team_name_en + ' vs ' + fix.away_team_name_en, local_date: fix.local_date, fixDate: fixDate.toISOString() })
+        continue
+      }
 
       debug.push({
         api: `${fix.home_team_name_en} ${homeScore}:${awayScore} ${fix.away_team_name_en}`,
