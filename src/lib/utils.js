@@ -50,6 +50,7 @@ export const FAZE_LABEL = {
   semifinale:      'Semifinále',
   o_3_misto:       'O 3. místo',
   finale:          'Finále',
+  vlozka:          '⚽ Vložka',
 }
 
 export const FAZE_CENA = {
@@ -60,6 +61,7 @@ export const FAZE_CENA = {
   semifinale:      50,
   o_3_misto:       50,
   finale:          100,
+  vlozka:          10,
 }
 
 export const FAZE_COLOR = {
@@ -70,6 +72,7 @@ export const FAZE_COLOR = {
   semifinale:      'bg-orange-100 text-orange-700',
   o_3_misto:       'bg-orange-100 text-orange-700',
   finale:          'bg-yellow-100 text-yellow-700',
+  vlozka:          'bg-green-100 text-green-700',
 }
 
 // ============================================================
