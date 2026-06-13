@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext'
 export default function Profile() {
   const { user, profile } = useAuth()
   const [notifySms,  setNotifySms]  = useState(false)
-  const [hoursBefore, setHoursBefore] = useState(24)
   const [saving,     setSaving]     = useState(false)
   const [saved,      setSaved]      = useState(false)
   const [myBets,     setMyBets]     = useState([])
@@ -15,7 +14,6 @@ export default function Profile() {
   useEffect(() => {
     if (!profile) return
     setNotifySms(profile.notify_whatsapp ?? false)
-    setHoursBefore(profile.notify_hours_before ?? 24)
     fetchData()
   }, [profile])
 
@@ -42,7 +40,7 @@ export default function Profile() {
     setSaving(true)
     await supabase.from('profiles').update({
       notify_whatsapp:     notifySms,
-      notify_hours_before: hoursBefore,
+      notify_hours_before: 24,
     }).eq('id', user.id)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -116,7 +114,7 @@ export default function Profile() {
       {/* Notifikace — pouze SMS */}
       <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '14px' }}>
         <h2 style={{ fontWeight: 700, fontSize: '13px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 4px' }}>🔔 Upozornění</h2>
-        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: '0 0 14px' }}>Připomenu ti zápasy bez tipu v příštích X hodinách</p>
+        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: '0 0 14px' }}>Každý den v 16:30 ti pošlu SMS s tvými nevsazenými zápasy na dalších 24 hodin</p>
 
         {/* SMS toggle */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
@@ -126,21 +124,6 @@ export default function Profile() {
           </div>
           <Toggle value={notifySms} onChange={setNotifySms} />
         </div>
-
-        {/* Kolik hodin */}
-        {notifySms && (
-          <div style={{ padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-            <p style={{ fontWeight: 600, fontSize: '13px', color: '#fff', margin: '0 0 8px' }}>Upozornit před výkopem</p>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              {[2, 4, 12, 24, 48].map(h => (
-                <button key={h} onClick={() => setHoursBefore(h)}
-                  style={{ flex: 1, padding: '8px 4px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '12px', background: hoursBefore === h ? '#e8a020' : 'rgba(255,255,255,0.08)', color: hoursBefore === h ? '#000' : '#fff' }}>
-                  {h}h
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {saved && <div style={{ marginTop: '10px', color: '#4ade80', fontSize: '13px', textAlign: 'center' }}>✅ Uloženo</div>}
 

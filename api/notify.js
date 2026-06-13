@@ -56,7 +56,7 @@ export default async function handler(req, res) {
   const errors = []
 
   for (const profile of profiles) {
-    const hoursBefore = profile.notify_hours_before || 24
+    const hoursBefore = 24  // pevně: nevsazené zápasy na dalších 24 h
     const cutoff = new Date(now.getTime() + hoursBefore * 60 * 60 * 1000)
 
     // Zapasy pro tohoto hrace v jeho casovem okne
