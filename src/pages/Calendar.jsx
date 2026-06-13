@@ -24,7 +24,6 @@ export default function Calendar() {
   const [loading, setLoading]     = useState(true)
   const [skupinaFilter, setSkupinaFilter] = useState(null)
   const todayRef = useRef(null)
-  const [showHistory, setShowHistory] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -80,6 +79,8 @@ export default function Calendar() {
         return matches.filter(m => matchDay(m) === todayCEST())
       case 'jutri':
         return matches.filter(m => matchDay(m) === tomorrowCEST())
+      case 'historie':
+        return matches.filter(m => matchDay(m) < todayCEST())
       default:
         return matches
     }
@@ -111,6 +112,7 @@ export default function Calendar() {
             { id: 'dnes', label: 'Dnes' },
             { id: 'jutri', label: 'Zítra' },
             { id: 'all', label: 'Vše' },
+            { id: 'historie', label: 'Historie' },
           ].map(t => (
             <button
               key={t.id}
@@ -153,43 +155,6 @@ export default function Calendar() {
       ) : (
         <div className="space-y-6">
 
-          {/* Historie - minulé zápasy */}
-          {tab === 'dnes' && (() => {
-            const pastMatches = matches.filter(m => matchDay(m) < todayCEST())
-            const pastGrouped = groupByDate(pastMatches)
-            if (pastMatches.length === 0) return null
-            return (
-              <div style={{ marginBottom: '16px' }}>
-                <button
-                  onClick={() => setShowHistory(h => !h)}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showHistory ? '12px' : 0 }}
-                >
-                  <span>📚 Historie ({pastMatches.length} zápasů)</span>
-                  <span>{showHistory ? '▲' : '▼'}</span>
-                </button>
-                {showHistory && Object.entries(pastGrouped).reverse().map(([date, dayMatches]) => {
-                  const d = new Date(date + 'T12:00:00Z')
-                  const days = ['Ne','Po','Út','St','Čt','Pá','So']
-                  const months = ['led','úno','bře','dub','kvě','čvn','čvc','srp','zář','říj','lis','pro']
-                  const label = `${days[d.getUTCDay()]} ${d.getUTCDate()}. ${months[d.getUTCMonth()]}`
-                  return (
-                    <div key={date} style={{ marginBottom: '16px', opacity: 0.8 }}>
-                      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{label}</h3>
-                      <div className="space-y-3">
-                        {dayMatches.map(m => (
-                          <div key={m.id}>
-                            <MatchCard match={m} myBet={myBets[m.id]} />
-                            <BetsReveal matchId={m.id} vykop={m.vykop} vyhodnoceno={m.vyhodnoceno} skore_domaci={m.vysledek_domaci} skore_hosti={m.vysledek_hosti} />
-                            <MatchChat matchId={m.id} vykop={m.vykop} nazevD={m.domaci?.nazev} nazevH={m.hosti?.nazev} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )
-          })()}
 
           {Object.entries(grouped).map(([date, dayMatches]) => {
             const d = new Date(date + 'T12:00:00Z')

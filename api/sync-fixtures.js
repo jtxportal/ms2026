@@ -141,6 +141,12 @@ const TEAM_ALIASES = {
   'NGA': ['Nigeria'],
   'UZB': ['Uzbekistan'],
   'CUW': ['Curaçao', 'Curacao'],
+  'BIH': ['Bosnia and Herzegovina', 'Bosnia'],
+  'SUI': ['Switzerland'],
+  'NED': ['Netherlands', 'Holland'],
+  'JPN': ['Japan'],
+  'ESP': ['Spain'],
+  'AUT': ['Austria'],
 }
 
 function matchTeam(ourCode, apiName) {
