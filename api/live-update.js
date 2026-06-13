@@ -179,7 +179,7 @@ function mapCardColor(detail) {
 // ── Hlavní handler ─────────────────────────────────────────
 export default async function handler(req, res) {
   // Autorizace — jen Vercel cron nebo admin s secret
-  const secret = req.headers['x-cron-secret']
+  const secret = req.headers['x-cron-secret'] || req.query.secret
   if (secret !== process.env.CRON_SECRET && process.env.NODE_ENV === 'production') {
     return res.status(401).json({ error: 'Unauthorized' })
   }
@@ -216,6 +216,13 @@ export default async function handler(req, res) {
         // Události stahujeme jen během živého zápasu nebo po skončení (jednou)
         if (LIVE_STATUSES.includes(status) || ENDED_STATUSES.includes(status)) {
           await updateEvents(match.id, fixtureId)
+        }
+
+        // Po skončení zápasu vyhodnotit: rozdělit bank výhercům, jinak přesun do jackpotu.
+        // settle_match je idempotentní — pokud je už vyhodnoceno, nic neudělá.
+        if (ENDED_STATUSES.includes(status)) {
+          const { error: settleErr } = await supabase.rpc('settle_match', { p_match_id: match.id })
+          if (settleErr) errors.push({ fixture: fixtureId, error: 'settle: ' + settleErr.message })
         }
 
         // Soupisky stahujeme 60 min před výkopem
