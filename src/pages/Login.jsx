@@ -27,8 +27,13 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      const email = `${prezdivka.trim().toLowerCase()}@tipovacka.local`
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password: heslo })
+      const uziv = prezdivka.trim().toLowerCase()
+      // Účty z registrace mají doménu @ms2026.app, starší ručně založené @tipovacka.local.
+      // Zkusíme nejdřív @ms2026.app, při neúspěchu @tipovacka.local – ať se přihlásí všichni.
+      let err = (await supabase.auth.signInWithPassword({ email: `${uziv}@ms2026.app`, password: heslo })).error
+      if (err) {
+        err = (await supabase.auth.signInWithPassword({ email: `${uziv}@tipovacka.local`, password: heslo })).error
+      }
       if (err) throw err
       navigate('/')
     } catch {
