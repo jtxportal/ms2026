@@ -188,14 +188,27 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API_FOOTBALL_KEY not set' })
   }
 
-  const results = []
-  const errors  = []
+  const results    = []
+  const errors     = []
+  const reconciled = []
 
   try {
+    // Dorovnání: vyhodnoť všechny dohrané, ale ještě nevyhodnocené zápasy.
+    // Pojistka, kdyby vyhodnocení v poll-okně uteklo (dlouhé nastavení / VAR / výpadek běhu).
+    const { data: stuck } = await supabase
+      .from('matches').select('id')
+      .eq('vyhodnoceno', false)
+      .in('live_status', ENDED_STATUSES)
+    for (const m of (stuck || [])) {
+      const { error: e } = await supabase.rpc('settle_match', { p_match_id: m.id })
+      if (e) errors.push({ match: m.id, error: 'reconcile: ' + e.message })
+      else reconciled.push(m.id)
+    }
+
     const matches = await getMatchesToPoll()
 
     if (matches.length === 0) {
-      return res.status(200).json({ message: 'No matches to poll', updated: 0 })
+      return res.status(200).json({ message: 'No matches to poll', updated: 0, reconciled })
     }
 
     // Batch call — až 20 fixture IDs najednou
@@ -241,6 +254,7 @@ export default async function handler(req, res) {
   return res.status(200).json({
     updated: results.length,
     fixtures: results,
+    reconciled: reconciled.length > 0 ? reconciled : undefined,
     errors: errors.length > 0 ? errors : undefined,
   })
 }

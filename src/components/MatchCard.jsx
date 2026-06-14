@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { formatDate, formatTime, isBeforeKickoff, minutesUntilKickoff,
          FAZE_LABEL, FAZE_COLOR, FAZE_CENA } from '../lib/utils'
+import MatchEvents from './MatchEvents'
 
 export default function MatchCard({ match, myBet, compact = false }) {
   const navigate = useNavigate()
@@ -24,6 +26,10 @@ export default function MatchCard({ match, myBet, compact = false }) {
   const scoreH    = isSettled ? match.vysledek_hosti  : (isLive || isEnded ? match.live_away : null)
   const hasResult = scoreD != null
 
+  // Žluté skóre + živá minuta u probíhajícího zápasu; bílé u dohraného.
+  const scoreColor = (isLive && !isSettled) ? '#facc15' : '#fff'
+  const [showEvents, setShowEvents] = useState(false)
+
   function handleTip() {
     if (!locked) navigate(`/tip/${match.id}`)
   }
@@ -41,10 +47,18 @@ export default function MatchCard({ match, myBet, compact = false }) {
             : FAZE_LABEL[match.faze] ?? match.faze}
         </span>
         <div className="text-right">
-          <span className="text-xs text-gray-500">{formatDate(match.vykop)}</span>
-          <span className="text-xs text-gray-700 font-semibold ml-2">{formatTime(match.vykop)}</span>
-          {!locked && mins < 60 && mins > 0 && (
-            <span className="ml-1 text-xs text-red-500 font-medium">({mins} min)</span>
+          {isLive ? (
+            <span style={{ color: '#facc15', fontWeight: 700, fontSize: '12px' }}>
+              🔴 {match.live_status === 'HT' ? 'Poločas' : `${match.live_minute ?? ''}'`}
+            </span>
+          ) : (
+            <>
+              <span className="text-xs text-gray-500">{formatDate(match.vykop)}</span>
+              <span className="text-xs text-gray-700 font-semibold ml-2">{formatTime(match.vykop)}</span>
+              {!locked && mins < 60 && mins > 0 && (
+                <span className="ml-1 text-xs text-red-500 font-medium">({mins} min)</span>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -62,7 +76,7 @@ export default function MatchCard({ match, myBet, compact = false }) {
         {/* Výsledek nebo skóre */}
         <div className="flex flex-col items-center min-w-[60px]">
           {hasResult ? (
-            <div style={{ fontSize: "22px", fontWeight: 800, color: "#fff" }}>
+            <div style={{ fontSize: "22px", fontWeight: 800, color: scoreColor }}>
               {scoreD} : {scoreH}
             </div>
           ) : (
@@ -94,7 +108,7 @@ export default function MatchCard({ match, myBet, compact = false }) {
             ? (myBet.tip_domaci === match.vysledek_domaci &&
                myBet.tip_hosti  === match.vysledek_hosti)
               ? 'bg-pitch-100 text-pitch-700'
-              : 'bg-gray-100 text-gray-500'
+              : 'bg-red-100 text-red-700'
             : 'bg-blue-50 text-blue-700'
           }`}
         >
@@ -105,6 +119,31 @@ export default function MatchCard({ match, myBet, compact = false }) {
               : `❌ Netrefil jsi · Tip: ${myBet.tip_domaci}:${myBet.tip_hosti}`
             : `📝 Tvůj tip: ${myBet.tip_domaci} : ${myBet.tip_hosti}`
           }
+        </div>
+      )}
+
+      {/* Průběh zápasu */}
+      {!compact && isLive && (
+        <div style={{ marginTop: 12, padding: '10px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.5px', color: '#facc15', textTransform: 'uppercase', marginBottom: 6 }}>● Průběh</div>
+          <MatchEvents matchId={match.id} live />
+        </div>
+      )}
+
+      {!compact && !isLive && (isEnded || isSettled) && (
+        <div style={{ marginTop: 12 }}>
+          <button
+            onClick={e => { e.stopPropagation(); setShowEvents(v => !v) }}
+            style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 12, color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >
+            <span>📋 Detail zápasu</span>
+            <span>{showEvents ? '▲' : '▼'}</span>
+          </button>
+          {showEvents && (
+            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: 12 }}>
+              <MatchEvents matchId={match.id} />
+            </div>
+          )}
         </div>
       )}
 

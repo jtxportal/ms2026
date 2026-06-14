@@ -31,6 +31,14 @@ export default function Calendar() {
       .finally(() => setLoading(false))
   }, [user])
 
+  // Během živých zápasů obnovuj skóre/minutu/průběh každou minutu.
+  const anyLive = matches.some(m => ['1H','HT','2H','ET','BT','P','LIVE'].includes(m.live_status))
+  useEffect(() => {
+    if (!anyLive) return
+    const t = setInterval(fetchMatches, 60000)
+    return () => clearInterval(t)
+  }, [anyLive])
+
   async function fetchMatches() {
     const { data } = await supabase
       .from('matches')
