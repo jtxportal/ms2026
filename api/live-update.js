@@ -88,7 +88,7 @@ async function updateLiveScore(match, fixtureData) {
 }
 
 // ── Události (góly, karty, střídání) ──────────────────────
-async function updateEvents(matchId, fixtureId) {
+async function updateEvents(matchId, fixtureId, homeId = null) {
   const events = await apiCall(`/fixtures/events?fixture=${fixtureId}`)
   if (!events?.length) return
 
@@ -99,7 +99,8 @@ async function updateEvents(matchId, fixtureId) {
     minute:        e.time?.elapsed ?? null,
     extra_minute:  e.time?.extra ?? null,
     event_type:    mapEventType(e.type, e.detail),
-    team_side:     null,                        // doplňujeme níže
+    team_side:     homeId == null ? null       // domácí/hosté podle ID týmu z fixture
+                   : (e.team?.id === homeId ? 'home' : 'away'),
     player_name:   e.player?.name ?? null,
     assist_name:   e.assist?.name ?? null,
     card_color:    mapCardColor(e.detail),
@@ -231,7 +232,7 @@ export default async function handler(req, res) {
 
         // Události stahujeme jen během živého zápasu nebo po skončení (jednou)
         if (LIVE_STATUSES.includes(status) || ENDED_STATUSES.includes(status)) {
-          await updateEvents(match.id, fixtureId)
+          await updateEvents(match.id, fixtureId, fixtureData.teams?.home?.id ?? null)
         }
 
         // Po skončení zápasu vyhodnotit: rozdělit bank výhercům, jinak přesun do jackpotu.

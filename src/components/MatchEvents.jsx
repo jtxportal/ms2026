@@ -47,12 +47,15 @@ export default function MatchEvents({ matchId, live = false }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {events.map((e, i) => {
         const r = describe(e)
+        const away = e.team_side === 'away'
         return (
           <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontSize: 13, padding: '2px 0' }}>
-            <span style={{ minWidth: 36, textAlign: 'right', color: 'rgba(255,255,255,0.45)', fontVariantNumeric: 'tabular-nums' }}>{fmtMin(e)}</span>
-            <span style={{ width: 18, textAlign: 'center', flexShrink: 0 }}>{r.icon}</span>
-            <span style={{ color: '#fff' }}>{r.text}</span>
-            {r.sub && <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{r.sub}</span>}
+            <span style={{ minWidth: 36, textAlign: 'right', color: 'rgba(255,255,255,0.45)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{fmtMin(e)}</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flex: 1, marginLeft: away ? '2.8em' : 0 }}>
+              <span style={{ width: 18, textAlign: 'center', flexShrink: 0 }}>{r.icon}</span>
+              <span style={{ color: '#fff' }}>{r.text}</span>
+              {r.sub && <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{r.sub}</span>}
+            </div>
           </div>
         )
       })}
