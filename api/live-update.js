@@ -38,16 +38,19 @@ async function apiCall(endpoint) {
 // ── Najdi zápasy k pollingování ────────────────────────────
 async function getMatchesToPoll() {
   const now = new Date()
-  const windowStart = new Date(now.getTime() - 130 * 60 * 1000) // -130 min (ET+prodl.)
+  // Sleduj od 75 min před výkopem do 6 h po výkopu (dlouhé nastavení/VAR/pozdní start).
+  // Navíc vždy znovu načti zápasy "zamrzlé" v živém stavu (nedopollovaný konec),
+  // ať se uvíznuté zápasy bez výsledku dořeší bez ohledu na stáří.
+  const windowStart = new Date(now.getTime() - 6 * 60 * 60 * 1000)
   const windowEnd   = new Date(now.getTime() + UPCOMING_MIN * 60 * 1000)
 
   const { data, error } = await supabase
     .from('matches')
     .select('id, api_fixture_id, vykop, live_status, vyhodnoceno')
     .not('api_fixture_id', 'is', null)
-    .lte('vykop', windowEnd.toISOString())
-    .gte('vykop', windowStart.toISOString())
     .eq('vyhodnoceno', false)
+    .lte('vykop', windowEnd.toISOString())
+    .or(`vykop.gte.${windowStart.toISOString()},live_status.in.(${LIVE_STATUSES.join(',')})`)
 
   if (error) throw error
   return data ?? []
