@@ -44,7 +44,7 @@ export function minutesUntilKickoff(utcString) {
 
 export const FAZE_LABEL = {
   skupina:         'Skupiny',
-  sestnactifinale: 'Osmnáctifinále',
+  sestnactifinale: 'Šestnáctifinále',
   osmifinale:      'Osmifinále',
   ctvrtfinale:     'Čtvrtfinále',
   semifinale:      'Semifinále',
