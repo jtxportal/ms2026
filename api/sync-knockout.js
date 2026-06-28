@@ -1,8 +1,10 @@
 // api/sync-knockout.js
-// Vytvoří vyřazovací zápasy (šestnáctifinále → finále) z API-Football.
-// Idempotentní: zápas s daným api_fixture_id už nevytvoří podruhé.
-// Zavolat: POST /api/sync-knockout  (header x-admin-secret: <CRON_SECRET>)
-// Lze volat opakovaně — jak se po skupinách doplní soupeři, přibydou další zápasy.
+// Vytvoří/opraví vyřazovací zápasy (šestnáctifinále → finále) z API-Football.
+// - Párování týmů přes PŘESNOU shodu jména (žádné "obsahuje zkratku" -> Austria≠Australia).
+// - Idempotentní + sebeopravné: pokud zápas s daným api_fixture_id existuje a týmy
+//   nesedí, jen je PŘEPÍŠE (nic nemaže). Nové vytvoří.
+// Spuštění z prohlížeče:  /api/sync-knockout?secret=<CRON_SECRET>
+//   přidej &debug=1 -> jen vypíše, co by udělal, NIC nezapíše.
 
 import { createClient } from '@supabase/supabase-js'
 
@@ -24,7 +26,6 @@ async function apiCall(endpoint) {
   return data.response
 }
 
-// Round z API → naše faze. Pořadí kontrol je důležité (semi/quarter/3rd před 'final').
 function mapFaze(round) {
   const r = (round || '').toLowerCase()
   if (r.includes('round of 32')) return 'sestnactifinale'
@@ -33,105 +34,111 @@ function mapFaze(round) {
   if (r.includes('semi'))        return 'semifinale'
   if (r.includes('3rd place') || r.includes('third place')) return 'o_3_misto'
   if (r.includes('final'))       return 'finale'
-  return null   // skupiny apod. → ignorovat
+  return null
+}
+
+// Normalizace: malá písmena, bez diakritiky, bez teček/pomlček navíc
+const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[.\-']/g, ' ').replace(/\s+/g, ' ').trim()
+
+// Kód -> přesná jména, která může API vrátit (anglicky)
+const TEAM_NAMES = {
+  RSA: ['south africa'], CAN: ['canada'], BRA: ['brazil'], JPN: ['japan'],
+  GER: ['germany'], PAR: ['paraguay'], NED: ['netherlands', 'holland'], MAR: ['morocco'],
+  CIV: ['ivory coast', 'cote d ivoire'], NOR: ['norway'], FRA: ['france'], SWE: ['sweden'],
+  MEX: ['mexico'], ECU: ['ecuador'], ENG: ['england'], COD: ['dr congo', 'congo dr', 'democratic republic of congo'],
+  BEL: ['belgium'], SEN: ['senegal'], USA: ['usa', 'united states'], BIH: ['bosnia and herzegovina', 'bosnia'],
+  ESP: ['spain'], AUS: ['australia'], POR: ['portugal'], CRO: ['croatia'],
+  SUI: ['switzerland'], EGY: ['egypt'], ARG: ['argentina'], CPV: ['cape verde'],
+  COL: ['colombia'], GHA: ['ghana'], AUT: ['austria'], NGA: ['nigeria'], ALG: ['algeria'],
+  // pro pozdější kola / další možné účastníky:
+  KOR: ['south korea', 'korea republic'], DEN: ['denmark'], URU: ['uruguay'],
+  TUR: ['turkey', 'turkiye'], IRN: ['iran'], IRQ: ['iraq'], KSA: ['saudi arabia'],
+  QAT: ['qatar'], CZE: ['czech republic', 'czechia'], SCO: ['scotland'],
+  NZL: ['new zealand'], CMR: ['cameroon'], TUN: ['tunisia'], JOR: ['jordan'],
+  UZB: ['uzbekistan'], PER: ['peru'], CHI: ['chile'], VEN: ['venezuela'],
+  PAN: ['panama'], CRC: ['costa rica'], HAI: ['haiti'], CUW: ['curacao'],
+  ITA: ['italy'], GRE: ['greece'], POL: ['poland'], SRB: ['serbia'],
+}
+
+function resolveCode(apiName, ourCodes) {
+  const n = norm(apiName)
+  if (!n) return null
+  // 1) přesná shoda podle známých jmen (jen kódy, které máme v DB)
+  for (const code of ourCodes) {
+    const names = TEAM_NAMES[code]
+    if (names && names.some(x => norm(x) === n)) return code
+  }
+  // 2) fallback: API vrátí přímo kód (např. "GER")
+  const byCode = ourCodes.find(c => norm(c) === n)
+  return byCode ?? null
 }
 
 export default async function handler(req, res) {
-  // Autorizace — header (x-admin-secret) NEBO ?secret= v URL (pro spuštění z prohlížeče)
   const secret = req.headers['x-admin-secret'] || req.query.secret
   if (secret !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
   if (!API_KEY) return res.status(500).json({ error: 'API_FOOTBALL_KEY not set' })
 
-  // Naše týmy (kód = id) a už existující api_fixture_id (kvůli idempotenci)
+  const debug = req.query.debug === '1'
+
   const { data: teams, error: tErr } = await supabase.from('teams').select('id')
   if (tErr) return res.status(500).json({ error: tErr.message })
   const ourCodes = teams.map(t => t.id)
 
-  const { data: existing, error: eErr } = await supabase
-    .from('matches').select('api_fixture_id').not('api_fixture_id', 'is', null)
+  const { data: existRows, error: eErr } = await supabase
+    .from('matches').select('id, api_fixture_id, tym_domaci, tym_hosti')
+    .not('api_fixture_id', 'is', null)
   if (eErr) return res.status(500).json({ error: eErr.message })
-  const known = new Set(existing.map(m => m.api_fixture_id))
+  const byFix = new Map(existRows.map(r => [r.api_fixture_id, r]))
 
-  // Stáhnout všechny fixtures turnaje
   const fixtures = await apiCall(`/fixtures?league=${WC_LEAGUE_ID}&season=${WC_SEASON}`)
   if (!fixtures?.length) return res.status(500).json({ error: 'No fixtures from API' })
 
-  let created = 0
-  const skipped_tbd = []   // soupeři ještě nejsou jasní
-  const skipped_dup = []   // už existuje
+  let created = 0, corrected = 0, unchanged = 0
+  const skipped_tbd = []
   const errors = []
-  const createdList = []
+  const report = []
 
   for (const fx of fixtures) {
     const faze = mapFaze(fx.league?.round)
-    if (!faze) continue                          // jen vyřazovací část
+    if (!faze) continue
 
-    const fixtureId = fx.fixture.id
-    if (known.has(fixtureId)) { skipped_dup.push(fixtureId); continue }
+    const homeApi = fx.teams?.home?.name
+    const awayApi = fx.teams?.away?.name
+    const home = resolveCode(homeApi, ourCodes)
+    const away = resolveCode(awayApi, ourCodes)
+    const row = { faze, fixture: fx.fixture.id, home_api: homeApi, away_api: awayApi, home, away }
+    report.push(row)
 
-    const home = resolveCode(fx.teams?.home?.name, ourCodes)
-    const away = resolveCode(fx.teams?.away?.name, ourCodes)
-    if (!home || !away) {                         // soupeř ještě není znám (TBD)
-      skipped_tbd.push({ round: fx.league?.round, home: fx.teams?.home?.name, away: fx.teams?.away?.name })
-      continue
+    if (debug) continue
+    if (!home || !away) { skipped_tbd.push(row); continue }
+
+    const ex = byFix.get(fx.fixture.id)
+    if (ex) {
+      if (ex.tym_domaci !== home || ex.tym_hosti !== away) {
+        const { error } = await supabase.from('matches')
+          .update({ tym_domaci: home, tym_hosti: away, faze, vykop: fx.fixture.date })
+          .eq('id', ex.id)
+        if (error) errors.push({ fixture: fx.fixture.id, error: error.message })
+        else corrected++
+      } else unchanged++
+    } else {
+      const { error } = await supabase.from('matches').insert({
+        faze, skupina: null, vykop: fx.fixture.date,
+        tym_domaci: home, tym_hosti: away, api_fixture_id: fx.fixture.id,
+      })
+      if (error) errors.push({ fixture: fx.fixture.id, error: error.message })
+      else created++
     }
-
-    const { error: insErr } = await supabase.from('matches').insert({
-      faze,
-      skupina:        null,
-      vykop:          fx.fixture.date,
-      tym_domaci:     home,
-      tym_hosti:      away,
-      api_fixture_id: fixtureId,
-    })
-
-    if (insErr) errors.push({ fixture: fixtureId, error: insErr.message })
-    else { created++; createdList.push(`${faze}: ${home}-${away}`) }
   }
 
+  if (debug) return res.status(200).json({ debug: true, count: report.length, report })
+
   return res.status(200).json({
-    created,
-    createdList: createdList.length ? createdList : undefined,
-    skipped_existing: skipped_dup.length,
-    skipped_tbd:      skipped_tbd.length ? skipped_tbd : undefined,
-    errors:           errors.length ? errors : undefined,
+    created, corrected, unchanged,
+    skipped_tbd: skipped_tbd.length ? skipped_tbd : undefined,
+    errors: errors.length ? errors : undefined,
+    report,
   })
-}
-
-// Reverzní mapování: anglický název z API → náš 3písmenný kód
-function resolveCode(apiName, ourCodes) {
-  if (!apiName) return null
-  return ourCodes.find(code => matchTeam(code, apiName)) ?? null
-}
-
-const TEAM_ALIASES = {
-  'CZE': ['Czech Republic', 'Czechia', 'Czech'],
-  'KOR': ['South Korea', 'Korea Republic', 'Korea'],
-  'RSA': ['South Africa'],
-  'CIV': ["Ivory Coast", "Côte d'Ivoire", "Cote d'Ivoire"],
-  'COD': ['DR Congo', 'Congo DR', 'Democratic Republic of Congo'],
-  'CPV': ['Cape Verde'],
-  'KSA': ['Saudi Arabia'],
-  'NZL': ['New Zealand'],
-  'SCO': ['Scotland'], 'ENG': ['England'], 'PAR': ['Paraguay'],
-  'URU': ['Uruguay'], 'ECU': ['Ecuador'], 'COL': ['Colombia'],
-  'NOR': ['Norway'], 'SWE': ['Sweden'], 'DEN': ['Denmark'],
-  'TUR': ['Turkey', 'Türkiye'], 'IRN': ['Iran'], 'IRQ': ['Iraq'],
-  'JOR': ['Jordan'], 'ALG': ['Algeria'], 'SEN': ['Senegal'],
-  'GHA': ['Ghana'], 'TUN': ['Tunisia'], 'MAR': ['Morocco'],
-  'EGY': ['Egypt'], 'CMR': ['Cameroon'], 'NGA': ['Nigeria'],
-  'UZB': ['Uzbekistan'], 'CUW': ['Curaçao', 'Curacao'],
-  'BIH': ['Bosnia and Herzegovina', 'Bosnia'], 'SUI': ['Switzerland'],
-  'NED': ['Netherlands', 'Holland'], 'JPN': ['Japan'], 'ESP': ['Spain'],
-  'AUT': ['Austria'],
-}
-
-function matchTeam(ourCode, apiName) {
-  if (!ourCode || !apiName) return false
-  const api = apiName.toLowerCase()
-  if (api.includes(ourCode.toLowerCase())) return true
-  const aliases = TEAM_ALIASES[ourCode] ?? []
-  return aliases.some(a => api.includes(a.toLowerCase()))
 }
