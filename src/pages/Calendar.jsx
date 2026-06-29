@@ -4,17 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import MatchCard from '../components/MatchCard'
 import MatchChat    from '../components/MatchChat'
 import BetsReveal   from '../components/BetsReveal'
-import { toCEST, SKUPINY } from '../lib/utils'
-
-const TABS = [
-  { id: 'all',   label: 'Vše' },
-  { id: 'dnes',  label: 'Dnes' },
-  { id: 'jutri', label: 'Zítra' },
-  { id: 'A', label: 'A' },
-  { id: 'B', label: 'B' },
-  { id: 'C', label: 'C' },
-  { id: 'D', label: 'D' },
-]
+import { toCEST } from '../lib/utils'
 
 export default function Calendar() {
   const { user } = useAuth()
@@ -22,7 +12,6 @@ export default function Calendar() {
   const [myBets,  setMyBets]      = useState({})
   const [tab,     setTab]         = useState('dnes')
   const [loading, setLoading]     = useState(true)
-  const [skupinaFilter, setSkupinaFilter] = useState(null)
   const todayRef = useRef(null)
 
   useEffect(() => {
@@ -78,11 +67,15 @@ export default function Calendar() {
     return t.toISOString().slice(0, 10)
   }
 
+  function yesterdayCEST() {
+    const t = new Date(nowCEST().getTime() - 86400000)
+    return t.toISOString().slice(0, 10)
+  }
+
   function filtered() {
-    if (skupinaFilter) {
-      return matches.filter(m => m.skupina === skupinaFilter)
-    }
     switch (tab) {
+      case 'vcera':
+        return matches.filter(m => matchDay(m) === yesterdayCEST())
       case 'dnes':
         return matches.filter(m => matchDay(m) === todayCEST())
       case 'jutri':
@@ -109,14 +102,13 @@ export default function Calendar() {
 
   const grouped = groupByDate(visible)
 
-  const SKUPINY_TABS = ['A','B','C','D','E','F','G','H','I','J','K','L']
-
   return (
     <div>
       {/* Rychlý filtr – přepínač */}
       <div className="mb-4 overflow-x-auto -mx-4 px-4">
         <div className="flex gap-2 pb-1">
           {[
+            { id: 'vcera', label: 'Včera' },
             { id: 'dnes', label: 'Dnes' },
             { id: 'jutri', label: 'Zítra' },
             { id: 'all', label: 'Vše' },
@@ -124,28 +116,14 @@ export default function Calendar() {
           ].map(t => (
             <button
               key={t.id}
-              onClick={() => { setTab(t.id); setSkupinaFilter(null) }}
+              onClick={() => setTab(t.id)}
               className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-                tab === t.id && !skupinaFilter
+                tab === t.id
                   ? 'bg-pitch-600 text-white'
                   : 'bg-white text-gray-500 border border-gray-200'
               }`}
             >
               {t.label}
-            </button>
-          ))}
-          <div className="w-px bg-gray-200 self-stretch mx-1" />
-          {SKUPINY_TABS.map(s => (
-            <button
-              key={s}
-              onClick={() => { setSkupinaFilter(s); setTab('') }}
-              className={`flex-shrink-0 w-9 h-8 rounded-full text-xs font-bold transition-colors ${
-                skupinaFilter === s
-                  ? 'bg-pitch-600 text-white'
-                  : 'bg-white text-gray-500 border border-gray-200'
-              }`}
-            >
-              {s}
             </button>
           ))}
         </div>
