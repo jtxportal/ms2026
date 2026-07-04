@@ -3,6 +3,10 @@
 // - Párování týmů přes PŘESNOU shodu jména (žádné "obsahuje zkratku" -> Austria≠Australia).
 // - Idempotentní + sebeopravné: pokud zápas s daným api_fixture_id existuje a týmy
 //   nesedí, jen je PŘEPÍŠE (nic nemaže). Nové vytvoří.
+// - NOVĚ: pokud zápas se stejnou fází a stejnými týmy už existuje BEZ api_fixture_id
+//   (např. ručně vložené kolo), jen mu DOPLNÍ api_fixture_id + vykop (neduplikuje).
+//   Když je pořadí domácí/hosté opačné, zápas jen NAHLÁSÍ a nechá být (kvůli už zadaným tipům).
+// - NOVĚ: funguje i jako Vercel Cron (autorizace přes Authorization: Bearer CRON_SECRET).
 // Spuštění z prohlížeče:  /api/sync-knockout?secret=<CRON_SECRET>
 //   přidej &debug=1 -> jen vypíše, co by udělal, NIC nezapíše.
 
@@ -50,7 +54,6 @@ const TEAM_NAMES = {
   ESP: ['spain'], AUS: ['australia'], POR: ['portugal'], CRO: ['croatia'],
   SUI: ['switzerland'], EGY: ['egypt'], ARG: ['argentina'], CPV: ['cape verde'],
   COL: ['colombia'], GHA: ['ghana'], AUT: ['austria'], NGA: ['nigeria'], ALG: ['algeria'],
-  // pro pozdější kola / další možné účastníky:
   KOR: ['south korea', 'korea republic'], DEN: ['denmark'], URU: ['uruguay'],
   TUR: ['turkey', 'turkiye'], IRN: ['iran'], IRQ: ['iraq'], KSA: ['saudi arabia'],
   QAT: ['qatar'], CZE: ['czech republic', 'czechia'], SCO: ['scotland'],
@@ -63,18 +66,18 @@ const TEAM_NAMES = {
 function resolveCode(apiName, ourCodes) {
   const n = norm(apiName)
   if (!n) return null
-  // 1) přesná shoda podle známých jmen (jen kódy, které máme v DB)
   for (const code of ourCodes) {
     const names = TEAM_NAMES[code]
     if (names && names.some(x => norm(x) === n)) return code
   }
-  // 2) fallback: API vrátí přímo kód (např. "GER")
   const byCode = ourCodes.find(c => norm(c) === n)
   return byCode ?? null
 }
 
 export default async function handler(req, res) {
-  const secret = req.headers['x-admin-secret'] || req.query.secret
+  // Autorizace: ruční (?secret= / x-admin-secret) NEBO Vercel Cron (Authorization: Bearer)
+  const bearer = (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '')
+  const secret = req.headers['x-admin-secret'] || req.query.secret || bearer
   if (secret !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
@@ -86,17 +89,26 @@ export default async function handler(req, res) {
   if (tErr) return res.status(500).json({ error: tErr.message })
   const ourCodes = teams.map(t => t.id)
 
+  // Načíst VŠECHNY zápasy (i bez api_fixture_id) — kvůli doplnění ID k ručně vloženým kolům
   const { data: existRows, error: eErr } = await supabase
-    .from('matches').select('id, api_fixture_id, tym_domaci, tym_hosti')
-    .not('api_fixture_id', 'is', null)
+    .from('matches').select('id, api_fixture_id, faze, tym_domaci, tym_hosti')
   if (eErr) return res.status(500).json({ error: eErr.message })
-  const byFix = new Map(existRows.map(r => [r.api_fixture_id, r]))
+
+  const byFix = new Map(
+    existRows.filter(r => r.api_fixture_id != null).map(r => [r.api_fixture_id, r])
+  )
+  const teamKey = (faze, a, b) => `${faze}|${a}|${b}`
+  const byTeams = new Map()   // jen řádky BEZ api_fixture_id
+  for (const r of existRows) {
+    if (r.api_fixture_id == null) byTeams.set(teamKey(r.faze, r.tym_domaci, r.tym_hosti), r)
+  }
 
   const fixtures = await apiCall(`/fixtures?league=${WC_LEAGUE_ID}&season=${WC_SEASON}`)
   if (!fixtures?.length) return res.status(500).json({ error: 'No fixtures from API' })
 
-  let created = 0, corrected = 0, unchanged = 0
+  let created = 0, corrected = 0, unchanged = 0, backfilled = 0
   const skipped_tbd = []
+  const skipped_reversed = []
   const errors = []
   const report = []
 
@@ -114,6 +126,7 @@ export default async function handler(req, res) {
     if (debug) continue
     if (!home || !away) { skipped_tbd.push(row); continue }
 
+    // 1) Známe už podle api_fixture_id?
     const ex = byFix.get(fx.fixture.id)
     if (ex) {
       if (ex.tym_domaci !== home || ex.tym_hosti !== away) {
@@ -123,21 +136,45 @@ export default async function handler(req, res) {
         if (error) errors.push({ fixture: fx.fixture.id, error: error.message })
         else corrected++
       } else unchanged++
-    } else {
-      const { error } = await supabase.from('matches').insert({
-        faze, skupina: null, vykop: fx.fixture.date,
-        tym_domaci: home, tym_hosti: away, api_fixture_id: fx.fixture.id,
-      })
-      if (error) errors.push({ fixture: fx.fixture.id, error: error.message })
-      else created++
+      continue
     }
+
+    // 2) Neznáme podle ID → zkus dohledat ručně vložený řádek podle fáze + týmů
+    const sameOrder = byTeams.get(teamKey(faze, home, away))
+    const revOrder  = byTeams.get(teamKey(faze, away, home))
+
+    if (sameOrder) {
+      const { error } = await supabase.from('matches')
+        .update({ api_fixture_id: fx.fixture.id, vykop: fx.fixture.date })
+        .eq('id', sameOrder.id)
+      if (error) errors.push({ fixture: fx.fixture.id, error: error.message })
+      else { backfilled++; byTeams.delete(teamKey(faze, home, away)) }
+      continue
+    }
+
+    if (revOrder) {
+      skipped_reversed.push({
+        ...row, existing_id: revOrder.id,
+        stored: `${revOrder.tym_domaci}-${revOrder.tym_hosti}`
+      })
+      continue
+    }
+
+    // 3) Nikde → vytvoř nový zápas
+    const { error } = await supabase.from('matches').insert({
+      faze, skupina: null, vykop: fx.fixture.date,
+      tym_domaci: home, tym_hosti: away, api_fixture_id: fx.fixture.id,
+    })
+    if (error) errors.push({ fixture: fx.fixture.id, error: error.message })
+    else created++
   }
 
   if (debug) return res.status(200).json({ debug: true, count: report.length, report })
 
   return res.status(200).json({
-    created, corrected, unchanged,
+    created, corrected, unchanged, backfilled,
     skipped_tbd: skipped_tbd.length ? skipped_tbd : undefined,
+    skipped_reversed: skipped_reversed.length ? skipped_reversed : undefined,
     errors: errors.length ? errors : undefined,
     report,
   })
