@@ -136,13 +136,20 @@ export default function AdminPage() {
   // --- VYHODNOCENÍ ---
   async function settleMatch(matchId) {
     const s = settle[matchId]
-    if (s?.domaci === undefined || s?.hosti === undefined) return
+    const d = parseInt(s?.domaci, 10)
+    const h = parseInt(s?.hosti, 10)
+    if (Number.isNaN(d) || Number.isNaN(h)) { flash('Vyplň obě skóre'); return }
+
     flash('Vyhodnocuji...')
-    const { error } = await supabase.rpc('settle_match', {
-      p_match_id: matchId,
-      p_skore_domaci: parseInt(s.domaci, 10),
-      p_skore_hosti: parseInt(s.hosti, 10),
-    })
+    // settle_match(p_match_id) si skóre čte z matches -> nejdřív zapsat výsledek.
+    // Zadává se skóre po 90 minutách (hlídá trigger trg_enforce_90min_result).
+    const { error: upErr } = await supabase
+      .from('matches')
+      .update({ vysledek_domaci: d, vysledek_hosti: h })
+      .eq('id', matchId)
+    if (upErr) { flash('Chyba zápisu skóre: ' + upErr.message); return }
+
+    const { error } = await supabase.rpc('settle_match', { p_match_id: matchId })
     if (error) { flash('Chyba: ' + error.message); return }
     flash('Zápas vyhodnocen ✅')
     fetchAll()
