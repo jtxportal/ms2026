@@ -8,6 +8,7 @@ export default function BetsReveal({ matchId, vykop, vyhodnoceno, skore_domaci, 
   const [loading, setLoading] = useState(false)
   const [bank,    setBank]    = useState(0)
   const [count,   setCount]   = useState(0)
+  const [jackpot, setJackpot] = useState(0)
 
   const kicked = new Date() > new Date(vykop)
 
@@ -23,7 +24,17 @@ export default function BetsReveal({ matchId, vykop, vyhodnoceno, skore_domaci, 
         setBank(sum)
         setCount((data ?? []).length)
       })
-  }, [matchId, kicked])
+
+    // Převedený jackpot se hraje jen v nejbližším nevyhodnoceném zápase.
+    // U už vyhodnocených zápasů zůstává dlaždice historicky správná (jen bank).
+    if (vyhodnoceno) { setJackpot(0); return }
+    Promise.all([
+      supabase.from('jackpot').select('zustatek').single(),
+      supabase.from('matches').select('id').eq('vyhodnoceno', false).order('vykop').limit(1).single(),
+    ]).then(([j, m]) => {
+      setJackpot(m.data?.id === matchId ? (j.data?.zustatek ?? 0) : 0)
+    })
+  }, [matchId, kicked, vyhodnoceno])
 
   if (!kicked) return null  // před výkopem nic nezobrazovat
 
@@ -49,13 +60,20 @@ export default function BetsReveal({ matchId, vykop, vyhodnoceno, skore_domaci, 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '6px' }}>
         <div style={{ flex: 1, background: 'rgba(232,160,32,0.1)', border: '1px solid rgba(232,160,32,0.25)', borderRadius: '10px', padding: '7px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)' }}>💰 Ve hře</span>
-          <strong style={{ fontSize: '14px', color: '#e8a020' }}>{bank} Kč</strong>
+          <strong style={{ fontSize: '14px', color: '#e8a020' }}>{bank + jackpot} Kč</strong>
         </div>
         <div style={{ flex: 1, background: 'rgba(0,180,200,0.08)', border: '1px solid rgba(0,180,200,0.2)', borderRadius: '10px', padding: '7px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)' }}>👥 Tipuje</span>
           <strong style={{ fontSize: '14px', color: '#00b4c8' }}>{count}</strong>
         </div>
       </div>
+
+      {/* Rozpad, když se hraje i o převedený jackpot */}
+      {jackpot > 0 && (
+        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', margin: '0 0 6px', paddingLeft: '2px' }}>
+          🎰 Sázky {bank} Kč + převedený jackpot {jackpot} Kč
+        </p>
+      )}
 
       {/* Toggle tipů */}
       <button
