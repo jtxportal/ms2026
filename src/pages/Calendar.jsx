@@ -10,7 +10,7 @@ export default function Calendar() {
   const { user } = useAuth()
   const [matches, setMatches]     = useState([])
   const [myBets,  setMyBets]      = useState({})
-  const [tab,     setTab]         = useState('dnes')
+  const [tab,     setTab]         = useState('o_3_misto')
   const [loading, setLoading]     = useState(true)
   const todayRef = useRef(null)
 
@@ -76,10 +76,11 @@ export default function Calendar() {
     switch (tab) {
       case 'vcera':
         return matches.filter(m => matchDay(m) === yesterdayCEST())
-      case 'dnes':
-        return matches.filter(m => matchDay(m) === todayCEST())
-      case 'jutri':
-        return matches.filter(m => matchDay(m) === tomorrowCEST())
+      // Závěr turnaje: místo Dnes/Zítra filtrujeme rovnou podle fáze
+      case 'o_3_misto':
+        return matches.filter(m => m.faze === 'o_3_misto')
+      case 'finale':
+        return matches.filter(m => m.faze === 'finale')
       case 'historie':
         return matches.filter(m => matchDay(m) < todayCEST())
       default:
@@ -109,8 +110,8 @@ export default function Calendar() {
         <div className="flex gap-2 pb-1">
           {[
             { id: 'vcera', label: 'Včera' },
-            { id: 'dnes', label: 'Dnes' },
-            { id: 'jutri', label: 'Zítra' },
+            { id: 'o_3_misto', label: '🥉 O 3. místo' },
+            { id: 'finale', label: '🏆 Finále' },
             { id: 'all', label: 'Vše' },
             { id: 'historie', label: 'Historie' },
           ].map(t => (
