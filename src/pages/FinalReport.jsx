@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import QRCode from 'qrcode'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+
+// Účet bankéře (Bob) pro závěrečné vyrovnání — QR Platba (SPD)
+const VYROVNANI_IBAN = 'CZ5780400000007301006002'
+const VYROVNANI_UCET = '7301006002/8040'
 
 // ============================================================
 // KOMPLETNÍ VYHODNOCENÍ TURNAJE (route /vyhodnoceni)
@@ -65,6 +70,69 @@ function LongtermResultCard({ icon, title, result, bets, myPrezdivka }) {
   )
 }
 
+// Osobní vyrovnání přihlášeného hráče + QR Platba pro dlužníky
+function MojeVyrovnani({ user, prezdivka }) {
+  const [saldo, setSaldo] = useState(null)
+  const [qr,    setQr]    = useState(null)
+
+  useEffect(() => {
+    if (!user) return
+    ;(async () => {
+      const [b, l, j] = await Promise.all([
+        supabase.from('bets').select('castka, vyhra').eq('user_id', user.id),
+        supabase.from('longterm_bets').select('castka, vyhra').eq('user_id', user.id),
+        supabase.from('jackpot_payouts').select('castka').eq('user_id', user.id),
+      ])
+      const s = (res, f) => (res.data ?? []).reduce((x, r) => x + (r[f] ?? 0), 0)
+      const v = s(b, 'vyhra') + s(l, 'vyhra') + s(j, 'castka') - s(b, 'castka') - s(l, 'castka')
+      setSaldo(v)
+      if (v < 0) {
+        const nick = (prezdivka ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase()
+        const spd = `SPD*1.0*ACC:${VYROVNANI_IBAN}*AM:${-v}.00*CC:CZK*RN:ROBERT NEJEDLY*MSG:TIPOVACKA MS 2026 - ${nick}`
+        try { setQr(await QRCode.toDataURL(spd, { width: 260, margin: 2 })) } catch (e) { /* QR se nepovedl — zobrazíme jen účet */ }
+      }
+    })()
+  }, [user])
+
+  if (saldo === null) return null
+
+  const border = saldo < 0 ? 'rgba(196,18,48,0.4)' : saldo > 0 ? 'rgba(74,222,128,0.4)' : 'rgba(255,255,255,0.15)'
+  return (
+    <div style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${border}`, borderRadius: '16px', padding: '16px', textAlign: 'center' }}>
+      <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 6px' }}>
+        💳 Moje vyrovnání
+      </p>
+      <p style={{ fontSize: '30px', fontWeight: 900, margin: '0 0 4px', color: saldo < 0 ? '#ff8080' : saldo > 0 ? '#4ade80' : 'rgba(255,255,255,0.7)' }}>
+        {saldo > 0 ? '+' : ''}{saldo} Kč
+      </p>
+      {saldo < 0 && (
+        <>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', margin: '0 0 12px' }}>
+            Naskenuj QR v bankovní appce a pošli {-saldo} Kč na účet tipovačky ({VYROVNANI_UCET}).
+          </p>
+          {qr && (
+            <img src={qr} alt="QR Platba"
+              style={{ width: '220px', maxWidth: '80%', borderRadius: '12px', background: '#fff', padding: '6px' }} />
+          )}
+        </>
+      )}
+      {saldo > 0 && (
+        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', margin: 0 }}>
+          Gratulace! 🎉 Pošli Bobovi číslo účtu a částka ti přijde.
+        </p>
+      )}
+      {saldo === 0 && (
+        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', margin: 0 }}>
+          Jsi vyrovnaný — nula od nuly pojde. 👌
+        </p>
+      )}
+      <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', margin: '10px 0 0' }}>
+        Saldo = vyhráno (zápasy + dlouhodobé + jackpot) − vsazeno · po zaplacení ti Bob odškrtne
+      </p>
+    </div>
+  )
+}
+
 export default function FinalReport() {
   const { user, profile } = useAuth()
   const navigate = useNavigate()
@@ -123,6 +191,9 @@ export default function FinalReport() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', paddingBottom: '24px' }}>
+
+        {/* Moje vyrovnání + QR platba */}
+        <MojeVyrovnani user={user} prezdivka={myPrezdivka} />
 
         {/* Hero — mistr světa */}
         <div style={{ background: 'linear-gradient(135deg, #e8a020, #c87010)', borderRadius: '18px', padding: '20px 18px', textAlign: 'center', boxShadow: '0 4px 24px rgba(232,160,32,0.35)' }}>
