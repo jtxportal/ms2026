@@ -119,6 +119,7 @@ export default function LongtermBets() {
   const [error,     setError]     = useState({})
   const [showTeams, setShowTeams] = useState(false)
   const [showPlayers, setShowPlayers] = useState(false)
+  const [ended,     setEnded]     = useState(false)
 
   const isOpen = new Date(UZAVERKA_UTC) > new Date()
 
@@ -136,6 +137,9 @@ export default function LongtermBets() {
   useEffect(() => {
     if (!user) return
     fetchMyBets()
+    // Po skončení turnaje nabídnout kompletní vyhodnocení
+    supabase.from('tournament_state').select('ukonceno').single()
+      .then(({ data }) => setEnded(!!data?.ukonceno))
   }, [user])
 
   async function fetchMyBets() {
@@ -176,6 +180,18 @@ export default function LongtermBets() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <h1 style={{ fontWeight: 800, fontSize: '20px', color: '#fff', margin: 0 }}>Dlouhodobé tipy 🎯</h1>
+
+      {/* Dlaždice — kompletní vyhodnocení (po finále) */}
+      {ended && (
+        <button onClick={() => navigate('/vyhodnoceni')}
+          style={{ width: '100%', padding: '16px 18px', borderRadius: '16px', background: 'linear-gradient(135deg, #e8a020, #c87010)', border: 'none', cursor: 'pointer', textAlign: 'left', boxShadow: '0 4px 20px rgba(232,160,32,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(0,0,0,0.55)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>🏁 Turnaj skončil</div>
+            <div style={{ fontSize: '18px', fontWeight: 900, color: '#000' }}>Kompletní vyhodnocení</div>
+          </div>
+          <span style={{ fontSize: '22px', color: '#000' }}>→</span>
+        </button>
+      )}
 
       {/* Uzávěrka */}
       <div style={{ borderRadius: '12px', padding: '12px 16px', fontSize: '13px', background: isOpen ? 'rgba(0,180,200,0.1)' : 'rgba(196,18,48,0.1)', border: isOpen ? '1px solid rgba(0,180,200,0.3)' : '1px solid rgba(196,18,48,0.3)', color: isOpen ? '#00b4c8' : '#ff8080' }}>

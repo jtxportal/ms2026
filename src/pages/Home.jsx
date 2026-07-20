@@ -19,12 +19,18 @@ export default function Home() {
   const [myStats,   setMyStats]   = useState(null)
   const [loading,   setLoading]   = useState(true)
   const [showRules, setShowRules] = useState(false)
+  const [ended,     setEnded]     = useState(false)
 
   useEffect(() => {
     if (!user) return
-    Promise.all([fetchJackpot(), fetchNextMatch(), fetchUpcoming(), fetchStandings(), fetchMyBets(), fetchMyStats()])
+    Promise.all([fetchJackpot(), fetchNextMatch(), fetchUpcoming(), fetchStandings(), fetchMyBets(), fetchMyStats(), fetchEnded()])
       .finally(() => setLoading(false))
   }, [user])
+
+  async function fetchEnded() {
+    const { data } = await supabase.from('tournament_state').select('ukonceno').single()
+    setEnded(!!data?.ukonceno)
+  }
 
   async function fetchJackpot() {
     const { data } = await supabase.from('jackpot').select('zustatek').single()
@@ -81,8 +87,21 @@ export default function Home() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
+      {/* Dlaždice — kompletní vyhodnocení (po skončení turnaje) */}
+      {ended && (
+        <button onClick={() => navigate('/vyhodnoceni')}
+          style={{ width: '100%', padding: '18px', borderRadius: '16px', background: 'linear-gradient(135deg, #e8a020, #c87010)', border: 'none', cursor: 'pointer', textAlign: 'left', boxShadow: '0 4px 20px rgba(232,160,32,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(0,0,0,0.55)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '3px' }}>🏁 Turnaj skončil · Španělsko mistrem světa</div>
+            <div style={{ fontSize: '22px', fontWeight: 900, color: '#000', lineHeight: 1.1 }}>Kompletní vyhodnocení</div>
+            <div style={{ fontSize: '12px', color: 'rgba(0,0,0,0.6)', marginTop: '3px' }}>Výherci, jackpot, konečný žebříček a Šinďova vokna →</div>
+          </div>
+          <span style={{ fontSize: '34px' }}>🏆</span>
+        </button>
+      )}
+
       {/* Banner - v dalším zápase se hraje o */}
-      {nextMatch && (
+      {!ended && nextMatch && (
         <div style={{ background: 'linear-gradient(135deg, #e8a020, #d4900a)', borderRadius: '16px', padding: '16px 18px', boxShadow: '0 4px 20px rgba(232,160,32,0.3)' }}>
           <p style={{ color: 'rgba(0,0,0,0.6)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 4px' }}>
             ⚽ V dalším zápase se hraje o
@@ -100,7 +119,7 @@ export default function Home() {
           )}
         </div>
       )}
-      {!nextMatch && jackpot !== null && (
+      {!ended && !nextMatch && jackpot !== null && (
         <div style={{ background: 'linear-gradient(135deg, #e8a020, #d4900a)', borderRadius: '16px', padding: '16px 18px' }}>
           <p style={{ color: 'rgba(0,0,0,0.6)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 4px' }}>💰 Jackpot</p>
           <p style={{ fontSize: '32px', fontWeight: 900, color: '#000', margin: 0 }}>{formatKcAbs(jackpot)}</p>

@@ -24,10 +24,10 @@ export default function AdminPage() {
   // Odebrání hráče
   const [deletePending, setDeletePending] = useState(null)
 
-  // Šinďovo okno
+  // Šinďovo okno — každé uložení = nový příspěvek (historie pro rekapitulaci)
   const [oknoText, setOknoText] = useState('')
   const [oknoImg,  setOknoImg]  = useState('')
-  const [oknoId,   setOknoId]   = useState(null)
+  const [lastOkno, setLastOkno] = useState(null)
   const [oknoSaving, setOknoSaving] = useState(false)
 
   useEffect(() => {
@@ -47,11 +47,7 @@ export default function AdminPage() {
       setPlayers(p.data ?? [])
       setMatches(m.data ?? [])
       setJackpot(j.data?.zustatek ?? 0)
-      if (o.data) {
-        setOknoText(o.data.content ?? '')
-        setOknoImg(o.data.image_url ?? '')
-        setOknoId(o.data.id)
-      }
+      setLastOkno(o.data ?? null)
     } catch (e) {
       console.error(e)
     }
@@ -159,21 +155,20 @@ export default function AdminPage() {
   async function saveOkno() {
     if (!oknoText.trim()) return
     setOknoSaving(true)
-    if (oknoId) {
-      await supabase.from('admin_notices').update({
-        content: oknoText.trim(),
-        image_url: oknoImg.trim() || null,
-        updated_at: new Date().toISOString(),
-      }).eq('id', oknoId)
+    // Vždy INSERT nového řádku — historie voken zůstává zachovaná
+    const { data, error } = await supabase.from('admin_notices').insert({
+      content: oknoText.trim(),
+      image_url: oknoImg.trim() || null,
+      autor: 'Šinďa',
+    }).select().single()
+    if (error) {
+      flash('Chyba: ' + error.message)
     } else {
-      const { data } = await supabase.from('admin_notices').insert({
-        content: oknoText.trim(),
-        image_url: oknoImg.trim() || null,
-        autor: 'Šinďa',
-      }).select().single()
-      if (data) setOknoId(data.id)
+      setLastOkno(data)
+      setOknoText('')
+      setOknoImg('')
+      flash('Šinďovo vokno zveřejněno ✅')
     }
-    flash('Šinďovo vokno uloženo ✅')
     setOknoSaving(false)
   }
 
@@ -341,11 +336,16 @@ export default function AdminPage() {
 
           <button onClick={saveOkno} disabled={!oknoText.trim() || oknoSaving}
             style={{ width: '100%', padding: '11px', borderRadius: '10px', background: 'linear-gradient(135deg, #e8a020, #c87010)', border: 'none', color: '#000', fontWeight: 700, cursor: 'pointer', fontSize: '14px', opacity: !oknoText.trim() ? 0.5 : 1 }}>
-            {oknoSaving ? 'Ukládám…' : oknoId ? '✅ Aktualizovat vokno' : '🎭 Zveřejnit'}
+            {oknoSaving ? 'Ukládám…' : '🎭 Zveřejnit nové vokno'}
           </button>
           <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: '8px', marginBottom: 0 }}>
-            Zobrazí se na domovské stránce pod bannerem
+            Zobrazí se na domovské stránce pod bannerem · starší vokna zůstávají v archivu (/sinda)
           </p>
+          {lastOkno && (
+            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', textAlign: 'center', marginTop: '6px', marginBottom: 0 }}>
+              Poslední vokno: „{(lastOkno.content ?? '').slice(0, 60)}{(lastOkno.content ?? '').length > 60 ? '…' : ''}"
+            </p>
+          )}
         </div>
       )}
 
